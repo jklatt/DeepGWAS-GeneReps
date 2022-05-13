@@ -1,13 +1,6 @@
-from tkinter import LabelFrame
-from matplotlib.cbook import flatten
 import numpy as np
 from numpy.random import seed
 from numpy.random import randint
-import torch.utils.data as data_utils
-from torchvision import datasets, transforms
-import torch
-from torch.utils.data import TensorDataset, DataLoader
-import random
 
 gene_length=10
 target_mutation_pos=3

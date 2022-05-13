@@ -85,6 +85,8 @@ def train(epoch):
         if args.cuda:
             data, bag_label = data.cuda(), bag_label.cuda()
         data, bag_label = Variable(data), Variable(bag_label)
+        print('\ndata: ',data)
+        print('\nlabel:',bag_label)
 
         # reset gradients
         optimizer.zero_grad()
