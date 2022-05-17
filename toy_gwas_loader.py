@@ -16,31 +16,34 @@ train=True
 num_in_train=2
 
 
-def generate_samples(gene_length, target_mutation_val, target_mutation_pos, num_genes,train=True):
+def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=True, interaction=False):
     # generate some toy sample of GWAS data with integers
     # gene_length=np.int(np.random.normal(gene_length_mean,gene_length_var,1))
+    target_mutation_pos=random.sample(range(gene_length),num_casual_snp)
 
     if train==True:
         data_list=[]*num_genes
         label_list=[]
         bag_label_list=[]
+        num_casual_snp_list=random.choices(range(1,max_present),k=num_genes)
+        
         for k in range(0,num_genes):
             data=[[]]*gene_length
             label=[]
             # seed(num_genes+k)
-            present_list=np.random.choice(2, gene_length)
+            
+            present_snp=random.sample(range(gene_length), num_casual_snp_list[k])
+            present_list=np.zeros(gene_length)
+            for l in present_snp:
+                present_list[l]=1
 
             for i in range(0,gene_length):
                 values = randint(0, 4)
-
-                if present_list[i]==1:
-                   present=1
-                else: 
-                   present=0
-
+                present=present_list[i]
 
                 if  i in target_mutation_pos and present==1:
-                    single_label=values==target_mutation_val
+                    # single_label=values==target_mutation_val
+                    single_label=True
                 else:
                     single_label= False
 
@@ -48,12 +51,21 @@ def generate_samples(gene_length, target_mutation_val, target_mutation_pos, num_
                 item=np.expand_dims(item,axis=0)           
                 label.append(single_label)
                 data[i]=item
-     
-            if True in label:
-                bag_label=[True]
-                
+
+            if interaction:
+                casual_label=[label[j] for j in target_mutation_pos]
+
+                if all(casual_label):
+                    bag_label=[True]     
+                else:
+                    bag_label=[False]
+
             else:
-                bag_label=[False]
+                if True in label:
+                    bag_label=[True]
+                    
+                else:
+                    bag_label=[False]
                 
 
             data_list.append(data)
@@ -65,24 +77,25 @@ def generate_samples(gene_length, target_mutation_val, target_mutation_pos, num_
         data_list=[]*num_genes
         label_list=[]
         bag_label_list=[]
+        num_casual_snp_list=random.choices(range(1,max_present),k=num_genes)
 
         for k in range(0,num_genes):
 
             data=[[]]*gene_length
             label=[]
             # seed(num_genes+10000+k)
-            present_list=np.random.choice(2, gene_length)
+            present_snp=random.sample(range(gene_length), num_casual_snp_list[k])
+            present_list=np.zeros(gene_length)
+            for l in present_snp:
+                present_list[l]=1
 
             for i in range(0,gene_length):
                 values = randint(0, 4)
-
-                if present_list[i]==1:
-                    present=1
-                else: 
-                    present=0
+                present=present_list[i]
 
                 if  i in target_mutation_pos and present==1:
-                    single_label=values==target_mutation_val
+                    # single_label=values==target_mutation_val
+                    single_label=True
                 else:
                     single_label= False
 
@@ -91,11 +104,20 @@ def generate_samples(gene_length, target_mutation_val, target_mutation_pos, num_
                 label.append(single_label)
                 data[i]=item
 
-            if True in label:
-                bag_label=True
-               
+            if interaction:
+                casual_label=[label[j] for j in target_mutation_pos]
+
+                if all(casual_label):
+                    bag_label=[True]     
+                else:
+                    bag_label=[False]
+
             else:
-                bag_label=False
+                if True in label:
+                    bag_label=[True]
+                    
+                else:
+                    bag_label=[False]
 
             data_list.append(data)
             label_list.append(label)
@@ -104,7 +126,7 @@ def generate_samples(gene_length, target_mutation_val, target_mutation_pos, num_
 
     return data_list, bag_label_list, label_list
 
-# data_list, bag_label_list, label_list=generate_samples(gene_length=10,target_mutation_val=0,target_mutation_pos=[3,5],num_genes=200)
+# data_list, bag_label_list, label_list=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=200,interaction=True)
 
 # train_data=TensorDataset(torch.tensor(data_list),torch.tensor(bag_label_list),torch.tensor(label_list))
 # train_loader =DataLoader(train_data,batch_size=num_in_train, shuffle=False)
@@ -116,96 +138,96 @@ def generate_samples(gene_length, target_mutation_val, target_mutation_pos, num_
 #     labels=data[1]
 #     print(labels)
 
-def generate_samples_twoSNPs(gene_length_mean,gene_length_var, target_mutation_val1, target_mutation_pos1,target_mutation_val2, target_mutation_pos2, num_genes,train=True):
-    # generate some toy sample of GWAS data with integers
+# def generate_samples_twoSNPs(gene_length_mean,gene_length_var, target_mutation_val1, target_mutation_pos1,target_mutation_val2, target_mutation_pos2, num_genes,train=True):
+#     # generate some toy sample of GWAS data with integers
     
-    gene_length=np.int(np.random.normal(gene_length_mean,gene_length_var,1))
-    if train==True:
-        data_list=[]*num_genes
-        label_list=[]
-        bag_label_list=[]
-        for k in range(0,num_genes):
-            data=[[]]*gene_length
-            label=[]
-            seed(num_genes+k)
+#     gene_length=np.int(np.random.normal(gene_length_mean,gene_length_var,1))
+#     if train==True:
+#         data_list=[]*num_genes
+#         label_list=[]
+#         bag_label_list=[]
+#         for k in range(0,num_genes):
+#             data=[[]]*gene_length
+#             label=[]
+#             seed(num_genes+k)
 
-            for i in range(0,gene_length):
-                values = randint(0, 4)
-                if i==target_mutation_pos1:
-                    single_label = values==target_mutation_val1 
+#             for i in range(0,gene_length):
+#                 values = randint(0, 4)
+#                 if i==target_mutation_pos1:
+#                     single_label = values==target_mutation_val1 
                     
-                elif i==target_mutation_pos2:
-                    single_label = values==target_mutation_val2 
+#                 elif i==target_mutation_pos2:
+#                     single_label = values==target_mutation_val2 
 
-                else:
-                    single_label= False
+#                 else:
+#                     single_label= False
 
-                if 3>i>0 or i>8:
-                    encoding_region=1
-                else: 
-                    encoding_region=0
+#                 if 3>i>0 or i>8:
+#                     encoding_region=1
+#                 else: 
+#                     encoding_region=0
 
-                item=[i,values,encoding_region]
-                item=np.expand_dims(item,axis=0)           
-                label.append(single_label)
-                data[i]=item
+#                 item=[i,values,encoding_region]
+#                 item=np.expand_dims(item,axis=0)           
+#                 label.append(single_label)
+#                 data[i]=item
      
-            if True in label:
-                bag_label=[True]
+#             if True in label:
+#                 bag_label=[True]
                 
-            else:
-                bag_label=[False]
+#             else:
+#                 bag_label=[False]
                 
 
-            data_list.append(data)
-            label_list.append(label)
-            bag_label_list.append(bag_label)
+#             data_list.append(data)
+#             label_list.append(label)
+#             bag_label_list.append(bag_label)
             
 
-    elif train==False:
-        data_list=[]*num_genes
-        label_list=[]
-        bag_label_list=[]
+#     elif train==False:
+#         data_list=[]*num_genes
+#         label_list=[]
+#         bag_label_list=[]
 
-        for k in range(0,num_genes):
+#         for k in range(0,num_genes):
 
-            data=[[]]*gene_length
-            label=[]
-            seed(num_genes+10000+k)
+#             data=[[]]*gene_length
+#             label=[]
+#             seed(num_genes+10000+k)
 
-            for i in range(0,gene_length):
-                values = randint(0, 4)
-                if i==target_mutation_pos1:
-                    single_label = values==target_mutation_val1 
+#             for i in range(0,gene_length):
+#                 values = randint(0, 4)
+#                 if i==target_mutation_pos1:
+#                     single_label = values==target_mutation_val1 
                     
-                elif i==target_mutation_pos2:
-                    single_label = values==target_mutation_val2 
+#                 elif i==target_mutation_pos2:
+#                     single_label = values==target_mutation_val2 
 
-                else:
-                    single_label= False
+#                 else:
+#                     single_label= False
 
-                if 3>i>0 or i>8:
-                    encoding_region=1
-                else: 
-                    encoding_region=0
+#                 if 3>i>0 or i>8:
+#                     encoding_region=1
+#                 else: 
+#                     encoding_region=0
 
-                item=[i,values,encoding_region] 
-                item=np.expand_dims(item,axis=0)             
-                label.append(single_label)
-                data[i]=item
+#                 item=[i,values,encoding_region] 
+#                 item=np.expand_dims(item,axis=0)             
+#                 label.append(single_label)
+#                 data[i]=item
 
-            if True in label:
-                bag_label=True
+#             if True in label:
+#                 bag_label=True
                
-            else:
-                bag_label=False
+#             else:
+#                 bag_label=False
 
-            data_list.append(data)
-            label_list.append(label)
-            bag_label_list.append(bag_label)
+#             data_list.append(data)
+#             label_list.append(label)
+#             bag_label_list.append(bag_label)
     
 
-    return data_list, bag_label_list, label_list
+#     return data_list, bag_label_list, label_list
 
 # data_list, bag_label_list, label_list=generate_samples_twoSNPs(gene_length_mean=13, gene_length_var=4,target_mutation_val1=0,target_mutation_pos1=3,target_mutation_val2=3,target_mutation_pos2=7,num_genes=200)
 

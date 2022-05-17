@@ -7,13 +7,13 @@ import torch
 import torch.utils.data as data_utils
 import torch.optim as optim
 from torch.autograd import Variable
-from toy_gwas_loader import generate_samples, generate_samples_twoSNPs
+from toy_gwas_loader import generate_samples
 from model_gwas import Attention, GatedAttention
 from torch.utils.data import TensorDataset, DataLoader
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST bags Example')
-parser.add_argument('--epochs', type=int, default=20, metavar='N',
+parser.add_argument('--epochs', type=int, default=50, metavar='N',
                     help='number of epochs to train (default: 20)')
 parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
                     help='learning rate (default: 0.0005)')
@@ -46,11 +46,11 @@ if args.cuda:
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-data_list_train,bag_label_list_train,label_list_train=generate_samples(gene_length=10, target_mutation_val=0,target_mutation_pos=[1,3,5],num_genes=1000)
+data_list_train,bag_label_list_train,label_list_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=True)
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
 train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
 
-data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10, target_mutation_val=0,target_mutation_pos=[1,3,5],num_genes=300,train=False)
+data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=True)
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
