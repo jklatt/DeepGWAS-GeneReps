@@ -46,22 +46,22 @@ if args.cuda:
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-# data_list_train,bag_label_list_train,label_list_train=generate_samples(gene_length_mean=10, gene_length_var=2, target_mutation_val=0,target_mutation_pos=3,num_genes=1000)
-# train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
-# train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
-
-# data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length_mean=10, gene_length_var=2, target_mutation_val=0,target_mutation_pos=3,num_genes=300,train=False)
-# test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
-# test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
-
-
-data_list_train,bag_label_list_train,label_list_train=generate_samples_twoSNPs(gene_length_mean=13, gene_length_var=4,target_mutation_val1=0,target_mutation_pos1=3,target_mutation_val2=3,target_mutation_pos2=7,num_genes=1000)
+data_list_train,bag_label_list_train,label_list_train=generate_samples(gene_length=10, target_mutation_val=0,target_mutation_pos=[1,3,5],num_genes=1000)
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
 train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
 
-data_list_test,bag_label_list_test,label_list_test=generate_samples_twoSNPs(gene_length_mean=13, gene_length_var=4,target_mutation_val1=0,target_mutation_pos1=3,target_mutation_val2=3,target_mutation_pos2=7,num_genes=200)
+data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10, target_mutation_val=0,target_mutation_pos=[1,3,5],num_genes=300,train=False)
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
+
+
+# data_list_train,bag_label_list_train,label_list_train=generate_samples_twoSNPs(gene_length_mean=13, gene_length_var=4,target_mutation_val1=0,target_mutation_pos1=3,target_mutation_val2=3,target_mutation_pos2=7,num_genes=1000)
+# train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
+# train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
+
+# data_list_test,bag_label_list_test,label_list_test=generate_samples_twoSNPs(gene_length_mean=13, gene_length_var=4,target_mutation_val1=0,target_mutation_pos1=3,target_mutation_val2=3,target_mutation_pos2=7,num_genes=200)
+# test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
+# test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
 
 
@@ -85,8 +85,8 @@ def train(epoch):
         if args.cuda:
             data, bag_label = data.cuda(), bag_label.cuda()
         data, bag_label = Variable(data), Variable(bag_label)
-        print('\ndata: ',data)
-        print('\nlabel:',bag_label)
+        # print('\ndata: ',data)
+        # print('\nlabel:',bag_label)
 
         # reset gradients
         optimizer.zero_grad()
