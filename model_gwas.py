@@ -67,6 +67,8 @@ class Attention(nn.Module):
         Y = Y.float()
         Y_prob, _, A = self.forward(X)
         Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
+        
+        #TODO: where potentially adding some weight to class imbalance
         neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
 
         return neg_log_likelihood, A
@@ -79,16 +81,25 @@ class GatedAttention(nn.Module):
         self.K = 1
 
         self.feature_extractor_part1 = nn.Sequential(
-            nn.Conv2d(1, 20, kernel_size=5),
+            # nn.Conv2d(1, 20, kernel_size=5),
+            # nn.ReLU(),
+            # nn.MaxPool2d(2, stride=2),
+            # nn.Conv2d(20, 50, kernel_size=5),
+            # nn.ReLU(),
+            # nn.MaxPool2d(2, stride=2)
+
+            nn.Linear(3, 10),# note: change to mlp now for the encoding part
             nn.ReLU(),
-            nn.MaxPool2d(2, stride=2),
-            nn.Conv2d(20, 50, kernel_size=5),
+            nn.MaxPool1d(2, stride=2),
+            nn.Linear(5, 20),
             nn.ReLU(),
-            nn.MaxPool2d(2, stride=2)
+            nn.MaxPool1d(2, stride=2)# note: changed to gru?
         )
 
         self.feature_extractor_part2 = nn.Sequential(
-            nn.Linear(50 * 4 * 4, self.L),
+            # nn.Linear(50 * 4 * 4, self.L),
+            # nn.ReLU(),
+            nn.Linear(10, self.L),
             nn.ReLU(),
         )
 
@@ -111,9 +122,11 @@ class GatedAttention(nn.Module):
 
     def forward(self, x):
         x = x.squeeze(0)
+        x = x.type(torch.FloatTensor)#added type change
 
         H = self.feature_extractor_part1(x)
-        H = H.view(-1, 50 * 4 * 4)
+        H = H.view(-1, 10)
+        # H = H.view(-1, 50 * 4 * 4)
         H = self.feature_extractor_part2(H)  # NxL
 
         A_V = self.attention_V(H)  # NxD
@@ -141,6 +154,9 @@ class GatedAttention(nn.Module):
         Y = Y.float()
         Y_prob, _, A = self.forward(X)
         Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
-        neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
+
+        #TODO: where potentially adding some weight to class imbalance
+        neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli 
+
 
         return neg_log_likelihood, A

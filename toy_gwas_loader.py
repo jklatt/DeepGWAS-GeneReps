@@ -15,6 +15,7 @@ num_genes=200
 train=True
 num_in_train=2
 
+#TODO: class inbalance parameter
 
 def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=True, interaction=False):
     # generate some toy sample of GWAS data with integers
@@ -30,7 +31,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
         for k in range(0,num_genes):
             data=[[]]*gene_length
             label=[]
-            # seed(num_genes+k)
+            seed(num_genes+k)
             
             present_snp=random.sample(range(gene_length), num_casual_snp_list[k])
             present_list=np.zeros(gene_length)
@@ -71,6 +72,13 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
             data_list.append(data)
             label_list.append(label)
             bag_label_list.append(bag_label)
+
+        true_prob=np.array(bag_label_list).sum()/len(bag_label_list)
+        false_prob=1-true_prob
+        bag_class_weight=[true_prob,false_prob]
+            
+             
+
             
 
     elif train==False:
@@ -83,7 +91,8 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
 
             data=[[]]*gene_length
             label=[]
-            # seed(num_genes+10000+k)
+            seed(num_genes+10000+k)
+
             present_snp=random.sample(range(gene_length), num_casual_snp_list[k])
             present_list=np.zeros(gene_length)
             for l in present_snp:
@@ -122,14 +131,18 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
             data_list.append(data)
             label_list.append(label)
             bag_label_list.append(bag_label)
+
+        true_prob=np.array(bag_label_list).sum()/len(bag_label_list)
+        false_prob=1-true_prob
+        bag_class_weight=[true_prob,false_prob]
     
 
-    return data_list, bag_label_list, label_list
+    return data_list, bag_label_list, label_list,bag_class_weight
 
-# data_list, bag_label_list, label_list=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=200,interaction=True)
+data_list, bag_label_list, label_list,bag_class_weight=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=200,interaction=True)
 
-# train_data=TensorDataset(torch.tensor(data_list),torch.tensor(bag_label_list),torch.tensor(label_list))
-# train_loader =DataLoader(train_data,batch_size=num_in_train, shuffle=False)
+train_data=TensorDataset(torch.tensor(data_list),torch.tensor(bag_label_list),torch.tensor(label_list))
+train_loader =DataLoader(train_data,batch_size=num_in_train, shuffle=False)
        
                            
 # for _, data in enumerate(train_loader):
