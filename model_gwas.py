@@ -67,7 +67,7 @@ class Attention(nn.Module):
         Y = Y.float()
         Y_prob, _, A = self.forward(X)
         Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
-        
+
         #TODO: where potentially adding some weight to class imbalance
         neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
 

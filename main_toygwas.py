@@ -46,11 +46,11 @@ if args.cuda:
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-data_list_train,bag_label_list_train,label_list_train,bag_class_weight=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=False)
+data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=True)
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
 train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
 
-data_list_test,bag_label_list_test,label_list_test,bag_class_weight=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=False)
+data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=True)
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
@@ -63,6 +63,8 @@ test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 # test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 # test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
+sharedParams = {'weight_train': bag_class_weight_train,
+'weight_test': bag_class_weight_test}
 
 
 print('Init Model')
@@ -76,7 +78,7 @@ if args.cuda:
 optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
 
 
-def train(epoch):
+def train(epoch,bag_class_weight_train):
     model.train()
     train_loss = 0.
     train_error = 0.
@@ -94,7 +96,12 @@ def train(epoch):
         loss, _ = model.calculate_objective(data, bag_label)
 
         #TODO: where we can put the weight
-        train_loss += loss.data[0]
+        if bag_label:
+            weighted_loss=bag_class_weight_train[0]*loss
+        else:
+            weighted_loss=bag_class_weight_train[1]*loss
+
+        train_loss += weighted_loss.data[0]
         error, _ = model.calculate_classification_error(data, bag_label)
         train_error += error
         # backward pass
@@ -141,6 +148,6 @@ def test():
 if __name__ == "__main__":
     print('Start Training')
     for epoch in range(1, args.epochs + 1):
-        train(epoch)
+        train(epoch,bag_class_weight_train)
     print('Start Testing')
     test()
