@@ -1,19 +1,20 @@
-# authors    : Shu Zixin (zixshu@student.ethz.ch)
-#              Juliane Klatt (juliane.klatt@bsse.ethz.ch)
-# last update: 2022-05-13
-#
-# Toy model for gene representation learning
-#
+"""
+Last updated on 2022-05-13
+@author1: Shu Zixin (zixshu@student.ethz.ch)
+@author2: Juliane Klatt (juliane.klatt@bsse.ethz.ch)
+
+Toy model for gene representation learning
+"""
 ### PACKAGES ##################################################################
 
-from __future__         import print_function
+from __future__           import print_function
 import argparse
-import numpy            as np
+import numpy              as np
 import torch
-import torch.optim      as optim
-from model_gwas         import Attention, GatedAttention
-from torch.autograd     import Variable
-from torch.utils.data   import TensorDataset, DataLoader
+import torch.optim        as optim
+from   model_gwas         import Attention,GatedAttention
+from   torch.autograd     import Variable
+from   torch.utils.data   import TensorDataset,DataLoader
 
 ### GLOBAL VARIABLES ##########################################################
 
@@ -80,8 +81,6 @@ if args.cuda:
 ### MAIN ######################################################################
 
 def main():
-
-    print('Generate Train and Test Set...')
     
     # define number of snps on the gene of interest, maximum number of snps
     # present in a sample, and identifiers of causal snps
@@ -89,32 +88,15 @@ def main():
     m_psnps = 20
     csnps   = [1,2]
     
-    # define train and test set sizes
-    n_train = args.num_bags_train
-    n_test  = args.num_bags_test
-    n_smpls = n_train + n_test
-    
     # generate genotype, snp labels and phenotypes
+    n_smpls  = args.num_bags_train+args.num_bags_test
     gs,ls,ps = generate_samples(n_gsnps,m_psnps,csnps,n_smpls)
     
-    # split into train and test set
-    train_data   = TensorDataset(torch.tensor(gs[:n_train]),
-                                 torch.tensor(ps[:n_train]),
-                                 torch.tensor(ls[:n_train]))
-    train_loader = DataLoader(train_data,batch_size=1,shuffle=False)
-    test_data    = TensorDataset(torch.tensor(gs[n_train:]),
-                                 torch.tensor(ps[n_train:]),
-                                 torch.tensor(ls[n_train:]))
-    test_loader  = DataLoader(test_data,batch_size=1,shuffle=False)
+    # set up test and training split
+    train_data,train_loader,test_data,test_loader = train_test_split(gs,ps,ls)
     
     # initialize the model of choice
-    print('Initialize Model...')
-    if args.model=='attention':
-        model = Attention()
-    elif args.model=='gated_attention':
-        model = GatedAttention()
-    if args.cuda:
-        model.cuda()
+    model = init_model()
     
     # setup optimizer
     optimizer = optim.Adam(model.parameters(),
@@ -134,6 +116,37 @@ def main():
     return None
 
 ### FUNCTIONS #################################################################
+
+def init_model():
+    
+    print('Initialize Model...')
+    if args.model=='attention':
+        model = Attention()
+    elif args.model=='gated_attention':
+        model = GatedAttention()
+    if args.cuda:
+        model.cuda()
+    
+    return model
+
+def train_test_split(gs,ps,ls):
+    
+    print('Generate Train and Test Set...')
+    
+    # define train and test set sizes
+    n_train = args.num_bags_train
+    
+    # split into train and test set
+    train_data   = TensorDataset(torch.tensor(gs[:n_train]),
+                                 torch.tensor(ps[:n_train]),
+                                 torch.tensor(ls[:n_train]))
+    train_loader = DataLoader(train_data,batch_size=1,shuffle=False)
+    test_data    = TensorDataset(torch.tensor(gs[n_train:]),
+                                 torch.tensor(ps[n_train:]),
+                                 torch.tensor(ls[n_train:]))
+    test_loader  = DataLoader(test_data,batch_size=1,shuffle=False)
+    
+    return train_data,train_loader,test_data,test_loader
 
 def generate_samples(n_gsnps,m_psnps,csnps,n_smpls):
     """Generates some toy samples of GWAS data.
@@ -192,6 +205,7 @@ def generate_samples(n_gsnps,m_psnps,csnps,n_smpls):
         
         # compute phenotype: 1 if at least one causal snp present, 0 if not
         phenotype = [int(sum(snp_label)>0)]
+        # TODO: implement logical AND (i.e., interaction), right now its XOR
         
         # append
         genotypes  += [genotype]
@@ -233,7 +247,17 @@ def train(epoch,train_loader,model,optimizer):
     train_loss /= len(train_loader)
     train_error /= len(train_loader)
  
-    print('Epoch: {}, Loss: {:.4f}, Train error: {:.4f}'.format(epoch,train_loss.cpu().numpy()[0],train_error))
+    train_log(epoch,train_loss,train_error)
+    
+    return None
+
+def train_log(epoch,loss,error):
+    
+    e = epoch
+    l = loss.cpu().numpy()[0]
+    r = error
+    
+    print('Epoch: {}, Loss: {:.4f}, Train error: {:.4f}'.format(e,l,r))
     
     return None
 
@@ -245,36 +269,52 @@ def test(test_loader,model):
     
     for batch_idx, (data,bag_label,label) in enumerate(test_loader):
         
-        # bag_label = label[0]
         instance_labels = label
         
         if args.cuda:
             data,bag_label = data.cuda(),bag_label.cuda()
             
-        data,bag_label        = Variable(data),Variable(bag_label)
-        loss,attention        = model.calculate_objective(data,bag_label)
-        test_loss            += loss.data[0]
-        error,predicted_label = model.calculate_classification_error(data,
-                                                                     bag_label)
-        test_error           += error
+        data,bag_label   = Variable(data),Variable(bag_label)
+        loss,attention   = model.calculate_objective(data,bag_label)
+        test_loss       += loss.data[0]
+        error,pred_label = model.calculate_classification_error(data,bag_label)
+        test_error      += error
 
-        # plot bag labels and instance labels for minority phenotype
+        # print bag labels and instance labels for minority phenotype
         bag_level      = (bag_label.cpu().data.numpy()[0],
-                          int(predicted_label.cpu().data.numpy()[0][0]))
-        instance_level = list(zip(instance_labels.numpy()[0].tolist(),
-                                  [np.round(a,2) for a in attention.cpu().data.numpy()[0]]))
+                          int(pred_label.cpu().data.numpy()[0][0]))
+        inst_att       = attention.cpu().data.numpy()[0]
+        inst_att       = [np.round(a,3) for a in inst_att]
+        inst_label     = instance_labels.numpy()[0].tolist()
+        instance_level = list(zip(inst_label,inst_att))
         
-        if int(predicted_label.cpu().data.numpy()[0][0])==1:
+        if int(pred_label.cpu().data.numpy()[0][0])==1:
 
-            print('\nTrue phenotype:      {}'.format(bag_level[0][0]))
-            print(  'Predicted pehnotype: {}'.format(bag_level[1]))
-            print('\nSNP labels, attention weights:\n{}'.format(instance_level))
+            pred_log(bag_level,instance_level)
 
     test_error /= len(test_loader)
     test_loss  /= len(test_loader)
 
-    print('\nTest Set, Loss: {:.4f}, Test error: {:.4f}'.format(test_loss.cpu().numpy()[0],test_error))
+    test_log(test_loss,test_error)
 
+    return None
+
+def pred_log(bags,instances):
+    
+    instances = [i for i in instances if i[1]!=0]
+    
+    print('\nTrue phenotype:      {}'.format(bags[0][0]))
+    print(  'Predicted pehnotype: {}'.format(bags[1]))
+    print('\nSNP labels, attention weights:\n{}'.format(instances))
+    
+    return None
+
+def test_log(loss,error):
+    
+    l = loss.cpu().numpy()[0]
+    e = error
+    print('\nTest Set, Loss: {:.4f}, Test error: {:.4f}'.format(l,e))
+    
     return None
 
 ###############################################################################
