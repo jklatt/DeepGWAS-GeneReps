@@ -75,7 +75,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
 
         true_prob=np.array(bag_label_list).sum()/len(bag_label_list)
         false_prob=1-true_prob
-        bag_class_weight=[true_prob,false_prob]
+        bag_class_weight=[1/true_prob,1/false_prob]
             
              
 
@@ -134,15 +134,15 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
 
         true_prob=np.array(bag_label_list).sum()/len(bag_label_list)
         false_prob=1-true_prob
-        bag_class_weight=[true_prob,false_prob]
+        bag_class_weight=[1/true_prob,1/false_prob]
     
 
     return data_list, bag_label_list, label_list,bag_class_weight
 
 data_list, bag_label_list, label_list,bag_class_weight=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=200,interaction=True)
 
-train_data=TensorDataset(torch.tensor(data_list),torch.tensor(bag_label_list),torch.tensor(label_list))
-train_loader =DataLoader(train_data,batch_size=num_in_train, shuffle=False)
+# train_data=TensorDataset(torch.tensor(data_list),torch.tensor(bag_label_list),torch.tensor(label_list))
+# train_loader =DataLoader(train_data,batch_size=num_in_train, shuffle=False)
        
                            
 # for _, data in enumerate(train_loader):
