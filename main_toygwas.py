@@ -46,11 +46,11 @@ if args.cuda:
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=True)
+data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=False)
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
 train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
 
-data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=True)
+data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=False)
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
@@ -147,7 +147,9 @@ def test():
 
 if __name__ == "__main__":
     print('Start Training')
+    print('training weight:', bag_class_weight_train)
     for epoch in range(1, args.epochs + 1):
         train(epoch,bag_class_weight_train)
     print('Start Testing')
+    print('training weight:', bag_class_weight_test)
     test()
