@@ -76,6 +76,14 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
         true_prob=np.array(bag_label_list).sum()/len(bag_label_list)
         false_prob=1-true_prob
         bag_class_weight=[1/true_prob,1/false_prob]
+
+        # TODO:
+        # if true_prob<0.2: 
+        #     ind=[i for i, x in enumerate(bag_label_list) if x]
+        #     ind_withreplace=random.choice(ind, size=num_genes*0.2)
+
+
+    
             
              
 

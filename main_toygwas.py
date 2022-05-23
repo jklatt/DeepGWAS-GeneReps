@@ -1,4 +1,5 @@
 from __future__ import print_function
+from tkinter import Label
 
 import numpy as np
 
@@ -10,6 +11,9 @@ from torch.autograd import Variable
 from toy_gwas_loader import generate_samples
 from model_gwas import Attention, GatedAttention
 from torch.utils.data import TensorDataset, DataLoader
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, roc_curve, auc
+
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST bags Example')
@@ -120,6 +124,9 @@ def test():
     model.eval()
     test_loss = 0.
     test_error = 0.
+    pred_label_list=[]
+    true_label_list=[]
+
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
         # bag_label = label[0]
         instance_labels = label
@@ -131,6 +138,10 @@ def test():
         error, predicted_label = model.calculate_classification_error(data, bag_label)
         test_error += error
 
+        true_label_list.append(bag_label)
+        pred_label_list.append(predicted_label)
+
+
         if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
             bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
             instance_level = list(zip(instance_labels.numpy()[0].tolist(),
@@ -139,10 +150,31 @@ def test():
             print('\nTrue Bag Label, Predicted Bag Label: {}\n'
                   'True Instance Labels, Attention Weights: {}'.format(bag_level, instance_level))
 
+
+
     test_error /= len(test_loader)
     test_loss /= len(test_loader)
 
     print('\nTest Set, Loss: {:.4f}, Test error: {:.4f}'.format(test_loss.cpu().numpy()[0], test_error))
+
+    #additional matrics and plots
+    print('confusion matrix:',confusion_matrix(np.concatenate(true_label_list), np.concatenate(pred_label_list)))
+    fpr, tpr, threshold=roc_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
+    roc_auc = auc(fpr, tpr)
+    plt.title('Bag level ROC')
+    plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
+    plt.legend(loc = 'lower right')
+    plt.plot([0, 1], [0, 1],'r--')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('True Positive Rate')
+    plt.xlabel('False Positive Rate')
+    plt.show()
+    
+
+
+
+
 
 
 if __name__ == "__main__":
