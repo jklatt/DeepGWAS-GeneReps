@@ -127,6 +127,10 @@ def test():
     pred_label_list=[]
     true_label_list=[]
 
+    rightattention_count=0.
+    total_count=0.
+
+
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
         # bag_label = label[0]
         instance_labels = label
@@ -141,6 +145,16 @@ def test():
         true_label_list.append(bag_label)
         pred_label_list.append(predicted_label)
 
+        if int(predicted_label.cpu().data.numpy()[0][0])==1:
+           attentiaon_array=attention_weights.cpu().data.numpy()[0]
+           max_value=max(attentiaon_array)
+           max_attention= [i for i, j in enumerate(attentiaon_array) if j == max_value]
+           total_count+=1
+           single_labels=instance_labels.numpy()[0].tolist()
+
+           if single_labels[max_attention[0]]:
+               rightattention_count+=1    
+
 
         if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
             bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
@@ -152,8 +166,12 @@ def test():
 
 
 
+
     test_error /= len(test_loader)
     test_loss /= len(test_loader)
+
+    print('The estimated probability of the right largest attention is',rightattention_count/total_count)
+
 
     print('\nTest Set, Loss: {:.4f}, Test error: {:.4f}'.format(test_loss.cpu().numpy()[0], test_error))
 

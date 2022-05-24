@@ -82,11 +82,6 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
         #     ind=[i for i, x in enumerate(bag_label_list) if x]
         #     ind_withreplace=random.choice(ind, size=num_genes*0.2)
 
-
-    
-            
-             
-
             
 
     elif train==False:
