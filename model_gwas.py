@@ -6,23 +6,24 @@ import torch.nn.functional as F
 class Attention(nn.Module):
     def __init__(self):
         super(Attention, self).__init__()
+        # self.L = 500
         self.L = 500
         self.D = 128
         self.K = 1
 
         self.feature_extractor_part1 = nn.Sequential(
             # nn.Conv2d(1, 20, kernel_size=1),# note: change to gru?
-            nn.Linear(3, 10),# note: change to mlp now for the encoding part
+            nn.Linear(3, 60),# note: change to mlp now for the encoding part
             nn.ReLU(),
             nn.MaxPool1d(2, stride=2),
             # nn.Conv2d(20, 50, kernel_size=1),
-            nn.Linear(5, 20),
+            nn.Linear(30, 128),
             nn.ReLU(),
-            nn.MaxPool1d(2, stride=2)# note: changed to gru?
+            nn.MaxPool1d(3, stride=3)# note: changed to gru?
         )
 
         self.feature_extractor_part2 = nn.Sequential(
-            nn.Linear(10, self.L),
+            nn.Linear(42, self.L),
             nn.ReLU(),
         )
 
@@ -41,7 +42,7 @@ class Attention(nn.Module):
         x = x.squeeze(0)
         x = x.type(torch.FloatTensor)#added type change
         H = self.feature_extractor_part1(x)
-        H = H.view(-1, 10)
+        H = H.view(-1, 42)
         H = self.feature_extractor_part2(H)  # NxL
 
         A = self.attention(H)  # NxK

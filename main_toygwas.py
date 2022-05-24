@@ -145,7 +145,7 @@ def test():
         true_label_list.append(bag_label)
         pred_label_list.append(predicted_label)
 
-        if int(predicted_label.cpu().data.numpy()[0][0])==1:
+        if bag_label.cpu().data.numpy()[0]==1:
            attentiaon_array=attention_weights.cpu().data.numpy()[0]
            max_value=max(attentiaon_array)
            max_attention= [i for i, j in enumerate(attentiaon_array) if j == max_value]

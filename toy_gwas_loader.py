@@ -49,6 +49,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
                     single_label= False
 
                 item=[i,values,present]
+                # item=[values,present]
                 item=np.expand_dims(item,axis=0)           
                 label.append(single_label)
                 data[i]=item
@@ -112,6 +113,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes,train=Tr
                     single_label= False
 
                 item=[i,values,present] 
+                # item=[values,present]
                 item=np.expand_dims(item,axis=0)             
                 label.append(single_label)
                 data[i]=item
