@@ -13,10 +13,11 @@ from model_gwas import Attention, GatedAttention
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
+import os
 
 
 # Training settings
-parser = argparse.ArgumentParser(description='PyTorch MNIST bags Example')
+parser = argparse.ArgumentParser(description='PyTorch GWAS Toy Example')
 parser.add_argument('--epochs', type=int, default=20, metavar='N',
                     help='number of epochs to train (default: 20)')
 parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
@@ -53,7 +54,7 @@ loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 # data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=False)
 # data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=False)
 
-data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes_train=1000,num_genes_test=300,interaction=True)
+data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=4,num_genes_train=1000,num_genes_test=300,interaction=True)
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
@@ -127,9 +128,25 @@ def train(epoch,bag_class_weight_train, weight):
     train_error /= len(train_loader)
 
     print('Epoch: {}, Loss: {:.4f}, Train error: {:.4f}'.format(epoch, train_loss.cpu().numpy()[0], train_error))
+    return train_loss
 
 
-def test():
+def test(PATH):
+
+    #Using checkpoint to evaluate the model
+    if args.model=='attention':
+        model = Attention()
+    elif args.model=='gated_attention':
+        model = GatedAttention()
+    optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
+
+    checkpoint = torch.load(PATH)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    epoch = checkpoint['epoch']
+    loss = checkpoint['loss']
+    print('We use the model in traing epoch', epoch, 'the loss was', int(loss))
+
     model.eval()
     test_loss = 0.
     test_error = 0.
@@ -224,11 +241,20 @@ def test():
 if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
+    working_dir=os.getcwd() 
+    PATH=working_dir+'/checkpoints/test.pt'
+
+    min_loss=100
     for epoch in range(1, args.epochs + 1):
-        train(epoch,bag_class_weight_train,weight=True)
+        train_loss=train(epoch,bag_class_weight_train,weight=True)
 
+        if train_loss<min_loss:
+            min_loss=train_loss
+            epoch_min=epoch
 
+    #save checkpoint of the model
+    torch.save({'epoch':epoch_min, 'model_state_dict': model.state_dict(),'optimizer_state_dict': optimizer.state_dict(),'loss':min_loss}, PATH)
 
     print('Start Testing')
     print('training weight:', bag_class_weight_test)
-    test()
+    test(PATH)
