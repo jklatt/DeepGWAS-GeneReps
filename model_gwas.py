@@ -12,18 +12,26 @@ class Attention(nn.Module):
         self.K = 1
 
         self.feature_extractor_part1 = nn.Sequential(
-            # nn.Conv2d(1, 20, kernel_size=1),# note: change to gru?
-            nn.Linear(3, 60),# note: change to mlp now for the encoding part
+            # nn.Conv2d(20, 50, kernel_size=1),
+            nn.Linear(3, 10),# note: change to mlp now for the encoding part
             nn.ReLU(),
             nn.MaxPool1d(2, stride=2),
-            # nn.Conv2d(20, 50, kernel_size=1),
-            nn.Linear(30, 128),
+            nn.Linear(5, 20),
             nn.ReLU(),
-            nn.MaxPool1d(3, stride=3)# note: changed to gru?
+            nn.MaxPool1d(2, stride=2)# note: changed to gru?
+
+            # conv1d trial
+            # nn.Conv1d(1, 15, kernel_size=1),
+            # nn.ReLU(),
+            # nn.MaxPool1d(2, stride=1),
+            # nn.Conv1d(15, 30, kernel_size=1),
+            # nn.ReLU(),
+            # nn.MaxPool1d(2, stride=1)# note: changed to gru?
         )
 
         self.feature_extractor_part2 = nn.Sequential(
-            nn.Linear(42, self.L),
+            # nn.Linear(30, self.L),
+            nn.Linear(10, self.L),
             nn.ReLU(),
         )
 
@@ -42,7 +50,8 @@ class Attention(nn.Module):
         x = x.squeeze(0)
         x = x.type(torch.FloatTensor)#added type change
         H = self.feature_extractor_part1(x)
-        H = H.view(-1, 42)
+        H = H.view(-1, 10)
+        # H = H.view(-1, 30)
         H = self.feature_extractor_part2(H)  # NxL
 
         A = self.attention(H)  # NxK

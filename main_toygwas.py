@@ -8,11 +8,11 @@ import torch
 import torch.utils.data as data_utils
 import torch.optim as optim
 from torch.autograd import Variable
-from toy_gwas_loader import generate_samples
+from toy_gwas_loader import generate_samples, get_weight
 from model_gwas import Attention, GatedAttention
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, roc_curve, auc
+from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 
 
 # Training settings
@@ -50,11 +50,17 @@ if args.cuda:
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=False)
+# data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=False)
+# data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=False)
+
+data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes_train=1000,num_genes_test=300,interaction=True)
+
+bag_class_weight_train=get_weight(bag_label_list_train)
+bag_class_weight_test=get_weight(bag_label_list_test)
+
+
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
 train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
-
-data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=False)
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
@@ -82,7 +88,7 @@ if args.cuda:
 optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
 
 
-def train(epoch,bag_class_weight_train):
+def train(epoch,bag_class_weight_train, weight):
     model.train()
     train_loss = 0.
     train_error = 0.
@@ -99,13 +105,16 @@ def train(epoch,bag_class_weight_train):
         # calculate loss and metrics
         loss, _ = model.calculate_objective(data, bag_label)
 
-        #TODO: where we can put the weight
-        if bag_label:
-            weighted_loss=bag_class_weight_train[0]*loss
-        else:
-            weighted_loss=bag_class_weight_train[1]*loss
+        if weight:
+            if bag_label:
+                weighted_loss=bag_class_weight_train[0]*loss
+            else:
+                weighted_loss=bag_class_weight_train[1]*loss
+            train_loss += weighted_loss.data[0]
 
-        train_loss += weighted_loss.data[0]
+        else:
+            train_loss += loss.data[0]
+        
         error, _ = model.calculate_classification_error(data, bag_label)
         train_error += error
         # backward pass
@@ -179,6 +188,12 @@ def test():
     print('confusion matrix:',confusion_matrix(np.concatenate(true_label_list), np.concatenate(pred_label_list)))
     fpr, tpr, threshold=roc_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
     roc_auc = auc(fpr, tpr)
+
+    precision, recall, thresholds = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
+    prc_avg = average_precision_score(np.concatenate(true_label_list),np.concatenate(pred_label_list))
+
+
+    plt.subplot(1, 2, 1)
     plt.title('Bag level ROC')
     plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
     plt.legend(loc = 'lower right')
@@ -187,6 +202,17 @@ def test():
     plt.ylim([0, 1])
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
+
+
+    plt.subplot(1, 2, 2) 
+    plt.title('Bag level PRC')
+    plt.plot( precision, recall, 'b', label = 'AP = %0.2f' % prc_avg)
+    plt.legend(loc = 'lower left')
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
+    plt.ylabel('Precision')
+    plt.xlabel('Recall')
+
     plt.show()
     
 
@@ -199,7 +225,10 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     for epoch in range(1, args.epochs + 1):
-        train(epoch,bag_class_weight_train)
+        train(epoch,bag_class_weight_train,weight=True)
+
+
+
     print('Start Testing')
     print('training weight:', bag_class_weight_test)
     test()
