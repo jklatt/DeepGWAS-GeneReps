@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 import os
 
+from collections import Counter
+import random
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy Example')
@@ -60,8 +62,27 @@ bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
 
 
+if 1/bag_class_weight_train[0]<0.2:
+        print('Using resampling')
+        true_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]]
+        res_ind=random.choices(true_bag,k=int(len(bag_label_list_train)*0.5))
+
+        data_list_res=[data_list_train[j] for j in res_ind]
+        bag_label_list_res=[bag_label_list_train[j] for j in res_ind]
+        label_list_train_res=[label_list_train[j] for j in res_ind]
+
+        data_list_train+=data_list_res
+        bag_label_list_train+=bag_label_list_res
+        label_list_train+=label_list_train_res
+
+        bag_class_weight_train=get_weight(bag_label_list_train)
+
+
+
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
-train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
+
+train_loader =DataLoader(train_data,batch_size=1, shuffle=True)
+
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 

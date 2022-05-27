@@ -10,6 +10,8 @@ import random
 from main_toygwas_jk import train_test_split
 
 
+
+
 gene_length=10
 target_mutation_pos=[3,5]
 target_mutation_val=0
@@ -75,7 +77,8 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
         data_list.append(data)
         label_list.append(label)
         bag_label_list.append(bag_label)
-
+        
+    
     train_data_list=data_list[:num_genes_train]
     test_data_list=data_list[num_genes_train:]
 
