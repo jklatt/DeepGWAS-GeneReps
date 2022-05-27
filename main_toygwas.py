@@ -56,26 +56,41 @@ loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 # data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=False)
 # data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=False)
 
-data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=4,num_genes_train=1000,num_genes_test=300,interaction=True)
+data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=3,num_genes_train=1000,num_genes_test=300,interaction=True)
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
 
 
-if 1/bag_class_weight_train[0]<0.2:
-        print('Using resampling')
-        true_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]]
-        res_ind=random.choices(true_bag,k=int(len(bag_label_list_train)*0.5))
+overampling=False
 
-        data_list_res=[data_list_train[j] for j in res_ind]
-        bag_label_list_res=[bag_label_list_train[j] for j in res_ind]
-        label_list_train_res=[label_list_train[j] for j in res_ind]
+if (1/bag_class_weight_train[0]<0.2) & (overampling==True):
+    print('Using resampling')
+    true_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]]
+    res_ind=random.choices(true_bag,k=int(len(bag_label_list_train)*0.5))
 
-        data_list_train+=data_list_res
-        bag_label_list_train+=bag_label_list_res
-        label_list_train+=label_list_train_res
+    data_list_res=[data_list_train[j] for j in res_ind]
+    bag_label_list_res=[bag_label_list_train[j] for j in res_ind]
+    label_list_train_res=[label_list_train[j] for j in res_ind]
 
-        bag_class_weight_train=get_weight(bag_label_list_train)
+    data_list_train+=data_list_res
+    bag_label_list_train+=bag_label_list_res
+    label_list_train+=label_list_train_res
+
+    bag_class_weight_train=get_weight(bag_label_list_train)
+
+elif 1/bag_class_weight_train[0]<0.2:
+    print('Using undersampling')
+    false_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]==False]
+    drop_ind=random.choices(false_bag,k=int(len(false_bag)*0.5))
+    keep_ind=[i for i in range(len(data_list_train)) if i not in drop_ind]
+    
+
+    data_list_train=[data_list_train[j] for j in keep_ind]
+    bag_label_list_train=[bag_label_list_train[j] for j in keep_ind]
+    label_list_train=[label_list_train[j] for j in keep_ind]
+
+    bag_class_weight_train=get_weight(bag_label_list_train)
 
 
 
@@ -166,7 +181,7 @@ def test(PATH):
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     epoch = checkpoint['epoch']
     loss = checkpoint['loss']
-    print('We use the model in traing epoch', epoch, 'the loss was', int(loss))
+    print('We use the model in traing epoch', epoch, 'the loss was', float(loss))
 
     model.eval()
     test_loss = 0.
@@ -244,12 +259,12 @@ def test(PATH):
 
     plt.subplot(1, 2, 2) 
     plt.title('Bag level PRC')
-    plt.plot( precision, recall, 'b', label = 'AP = %0.2f' % prc_avg)
+    plt.plot(recall, precision , 'b', label = 'AP = %0.2f' % prc_avg)
     plt.legend(loc = 'lower left')
     plt.xlim([0, 1])
     plt.ylim([0, 1])
-    plt.ylabel('Precision')
     plt.xlabel('Recall')
+    plt.ylabel('Precision')
 
     plt.show()
     
