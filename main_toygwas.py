@@ -21,7 +21,7 @@ import collections
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy Example')
-parser.add_argument('--epochs', type=int, default=2, metavar='N',
+parser.add_argument('--epochs', type=int, default=20, metavar='N',
                     help='number of epochs to train (default: 20)')
 parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
                     help='learning rate (default: 0.0005)')
@@ -54,7 +54,7 @@ if args.cuda:
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes_train=1000,num_genes_test=300,interaction=True)
+data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=3,num_genes_train=1000,num_genes_test=300,interaction=True)
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
@@ -83,7 +83,7 @@ if (1/bag_class_weight_train[0]<0.2) & (overampling==True):
 elif 1/bag_class_weight_train[0]<0.2:
     print('Using undersampling')
     false_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]==False]
-    drop_ind=random.choices(false_bag,k=int(len(false_bag)*0.4),replace=False)
+    drop_ind=random.sample(false_bag,k=int(len(false_bag)*0.5))
     keep_ind=[i for i in range(len(data_list_train)) if i not in drop_ind]
     
     data_list_train=[data_list_train[j] for j in keep_ind]
@@ -186,6 +186,7 @@ def test(PATH):
 
     attention_array_list=[]
     single_labels_list=[]
+    y_prob_list=[]
 
 
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
@@ -199,8 +200,12 @@ def test(PATH):
         error, predicted_label = model.calculate_classification_error(data, bag_label)
         test_error += error
 
+        y_prob,_ ,_ = model.forward(data)
+        y_prob=torch.clamp(y_prob, min=1e-5, max=1. - 1e-5)
+
         true_label_list.append(bag_label)
         pred_label_list.append(predicted_label)
+        y_prob_list.append(y_prob.detach().numpy())
 
         if predicted_label.cpu().data.numpy()[0][0]==1:
            attention_array=attention_weights.cpu().data.numpy()[0]
@@ -235,18 +240,25 @@ def test(PATH):
     test_error /= len(test_loader)
     test_loss /= len(test_loader)
 
-    print('The estimated probability of the right largest attention is',rightattention_count/total_count)
+    print('confusion matrix:',confusion_matrix(np.concatenate(true_label_list), np.concatenate(pred_label_list)))
 
+    if total_count==0:
+        print('The estimated probability of the right largest attention is',rightattention_count/(total_count+0.000000000001))
+    else:
+        print('The estimated probability of the right largest attention is',rightattention_count/total_count)
+
+
+    
 
     print('\nTest Set, Loss: {:.4f}, Test error: {:.4f}'.format(test_loss.cpu().numpy()[0], test_error))
 
     #additional matrics and plots bag level
-    print('confusion matrix:',confusion_matrix(np.concatenate(true_label_list), np.concatenate(pred_label_list)))
-    fpr, tpr, threshold_roc=roc_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
+
+    fpr, tpr, threshold_roc=roc_curve(np.concatenate(true_label_list), np.concatenate(y_prob_list))
     roc_auc = auc(fpr, tpr)
 
-    precision, recall, thresholds_prc = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
-    prc_avg = average_precision_score(np.concatenate(true_label_list),np.concatenate(pred_label_list))
+    precision, recall, thresholds_prc = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(y_prob_list))
+    prc_avg = average_precision_score(np.concatenate(true_label_list),np.concatenate(y_prob_list))
 
     #instance level evaluations
     instance_level_score=np.concatenate(attention_array_list)
@@ -259,7 +271,7 @@ def test(PATH):
     roc_auc_instance = auc(fpr_instance, tpr_instance)
 
 
-    figure, axis = plt.subplots(2, 2)
+    figure, axis = plt.subplots(2, 2, figsize=(7, 7))
 
     axis[0, 0].set_title('Bag level ROC')
     axis[0, 0].plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
@@ -296,6 +308,9 @@ def test(PATH):
     axis[1, 1].set_ylim([0, 1])
     axis[1, 1].set_xlabel('Recall')
     axis[1, 1].set_ylabel('Precision')
+
+
+    plt.tight_layout()
 
 
 
