@@ -17,10 +17,11 @@ import os
 
 from collections import Counter
 import random
+import collections
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy Example')
-parser.add_argument('--epochs', type=int, default=20, metavar='N',
+parser.add_argument('--epochs', type=int, default=2, metavar='N',
                     help='number of epochs to train (default: 20)')
 parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
                     help='learning rate (default: 0.0005)')
@@ -53,21 +54,21 @@ if args.cuda:
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-# data_list_train,bag_label_list_train,label_list_train,bag_class_weight_train=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes=1000,interaction=False)
-# data_list_test,bag_label_list_test,label_list_test,bag_class_weight_test=generate_samples(gene_length=10,max_present=8, num_casual_snp=2,num_genes=300,train=False, interaction=False)
-
-data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=3,num_genes_train=1000,num_genes_test=300,interaction=True)
+data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=2,num_genes_train=1000,num_genes_test=300,interaction=True)
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
 
 
-overampling=False
+overampling=True
 
 if (1/bag_class_weight_train[0]<0.2) & (overampling==True):
     print('Using resampling')
     true_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]]
     res_ind=random.choices(true_bag,k=int(len(bag_label_list_train)*0.5))
+    counter=collections.Counter(res_ind)
+
+    print('The three most commom samples', counter.most_common(3),'the total length of append dataset is', len(res_ind))
 
     data_list_res=[data_list_train[j] for j in res_ind]
     bag_label_list_res=[bag_label_list_train[j] for j in res_ind]
@@ -82,10 +83,9 @@ if (1/bag_class_weight_train[0]<0.2) & (overampling==True):
 elif 1/bag_class_weight_train[0]<0.2:
     print('Using undersampling')
     false_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]==False]
-    drop_ind=random.choices(false_bag,k=int(len(false_bag)*0.5))
+    drop_ind=random.choices(false_bag,k=int(len(false_bag)*0.4),replace=False)
     keep_ind=[i for i in range(len(data_list_train)) if i not in drop_ind]
     
-
     data_list_train=[data_list_train[j] for j in keep_ind]
     bag_label_list_train=[bag_label_list_train[j] for j in keep_ind]
     label_list_train=[label_list_train[j] for j in keep_ind]
@@ -101,14 +101,6 @@ train_loader =DataLoader(train_data,batch_size=1, shuffle=True)
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
-
-# data_list_train,bag_label_list_train,label_list_train=generate_samples_twoSNPs(gene_length_mean=13, gene_length_var=4,target_mutation_val1=0,target_mutation_pos1=3,target_mutation_val2=3,target_mutation_pos2=7,num_genes=1000)
-# train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
-# train_loader =DataLoader(train_data,batch_size=1, shuffle=False)
-
-# data_list_test,bag_label_list_test,label_list_test=generate_samples_twoSNPs(gene_length_mean=13, gene_length_var=4,target_mutation_val1=0,target_mutation_pos1=3,target_mutation_val2=3,target_mutation_pos2=7,num_genes=200)
-# test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
-# test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
 
 sharedParams = {'weight_train': bag_class_weight_train,
 'weight_test': bag_class_weight_test}
@@ -192,6 +184,9 @@ def test(PATH):
     rightattention_count=0.
     total_count=0.
 
+    attention_array_list=[]
+    single_labels_list=[]
+
 
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
         # bag_label = label[0]
@@ -207,15 +202,23 @@ def test(PATH):
         true_label_list.append(bag_label)
         pred_label_list.append(predicted_label)
 
-        if bag_label.cpu().data.numpy()[0]==1:
-           attentiaon_array=attention_weights.cpu().data.numpy()[0]
-           max_value=max(attentiaon_array)
-           max_attention= [i for i, j in enumerate(attentiaon_array) if j == max_value]
+        if predicted_label.cpu().data.numpy()[0][0]==1:
+           attention_array=attention_weights.cpu().data.numpy()[0]
+
+           #counting for calculating probability of max weight if true label
+           max_value=max(attention_array)
+           max_attention= [i for i, j in enumerate(attention_array) if j == max_value]
            total_count+=1
            single_labels=instance_labels.numpy()[0].tolist()
-
            if single_labels[max_attention[0]]:
-               rightattention_count+=1    
+               rightattention_count+=1 
+
+           #prepare list for instance level ROC
+           attention_array_list.append(attention_array)
+           single_labels_list.append(single_labels)
+
+           
+
 
 
         if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
@@ -237,34 +240,64 @@ def test(PATH):
 
     print('\nTest Set, Loss: {:.4f}, Test error: {:.4f}'.format(test_loss.cpu().numpy()[0], test_error))
 
-    #additional matrics and plots
+    #additional matrics and plots bag level
     print('confusion matrix:',confusion_matrix(np.concatenate(true_label_list), np.concatenate(pred_label_list)))
-    fpr, tpr, threshold=roc_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
+    fpr, tpr, threshold_roc=roc_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
     roc_auc = auc(fpr, tpr)
 
-    precision, recall, thresholds = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
+    precision, recall, thresholds_prc = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(pred_label_list))
     prc_avg = average_precision_score(np.concatenate(true_label_list),np.concatenate(pred_label_list))
 
+    #instance level evaluations
+    instance_level_score=np.concatenate(attention_array_list)
+    instance_level_truth=np.concatenate(single_labels_list)
 
-    plt.subplot(1, 2, 1)
-    plt.title('Bag level ROC')
-    plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
-    plt.legend(loc = 'lower right')
-    plt.plot([0, 1], [0, 1],'r--')
-    plt.xlim([0, 1])
-    plt.ylim([0, 1])
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
+    precision_instance, recall_instance, thresholds_prc_instance = precision_recall_curve(instance_level_truth, instance_level_score)
+    prc_avg_instance = average_precision_score(instance_level_truth, instance_level_score)
+
+    fpr_instance, tpr_instance, threshold_roc_instance=roc_curve(instance_level_truth, instance_level_score)
+    roc_auc_instance = auc(fpr_instance, tpr_instance)
 
 
-    plt.subplot(1, 2, 2) 
-    plt.title('Bag level PRC')
-    plt.plot(recall, precision , 'b', label = 'AP = %0.2f' % prc_avg)
-    plt.legend(loc = 'lower left')
-    plt.xlim([0, 1])
-    plt.ylim([0, 1])
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
+    figure, axis = plt.subplots(2, 2)
+
+    axis[0, 0].set_title('Bag level ROC')
+    axis[0, 0].plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
+    axis[0, 0].legend(loc = 'lower right')
+    axis[0, 0].plot([0, 1], [0, 1],'r--')
+    axis[0, 0].set_xlim([0, 1])
+    axis[0, 0].set_ylim([0, 1])
+    axis[0, 0].set_ylabel('True Positive Rate')
+    axis[0, 0].set_xlabel('False Positive Rate')
+
+
+    # plt.subplot(1, 2, 2) 
+    axis[0, 1].set_title('Bag level PRC')
+    axis[0, 1].plot(recall, precision , 'b', label = 'AP = %0.2f' % prc_avg)
+    axis[0, 1].legend(loc = 'lower left')
+    axis[0, 1].set_xlim([0, 1])
+    axis[0, 1].set_ylim([0, 1])
+    axis[0, 1].set_xlabel('Recall')
+    axis[0, 1].set_ylabel('Precision')
+
+    axis[1, 0].set_title('Instance level ROC')
+    axis[1, 0].plot(fpr_instance, tpr_instance, 'b', label = 'AUC = %0.2f' % roc_auc_instance)
+    axis[1, 0].legend(loc = 'lower right')
+    axis[1, 0].plot([0, 1], [0, 1],'r--')
+    axis[1, 0].set_xlim([0, 1])
+    axis[1, 0].set_ylim([0, 1])
+    axis[1, 0].set_ylabel('True Positive Rate')
+    axis[1, 0].set_xlabel('False Positive Rate')
+
+    axis[1, 1].set_title('Instance level PRC')
+    axis[1, 1].plot(recall_instance, precision_instance , 'b', label = 'AP = %0.2f' % prc_avg_instance)
+    axis[1, 1].legend(loc = 'lower left')
+    axis[1, 1].set_xlim([0, 1])
+    axis[1, 1].set_ylim([0, 1])
+    axis[1, 1].set_xlabel('Recall')
+    axis[1, 1].set_ylabel('Precision')
+
+
 
     plt.show()
     
