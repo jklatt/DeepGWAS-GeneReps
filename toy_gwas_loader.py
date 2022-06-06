@@ -8,8 +8,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import random
 
 from main_toygwas_jk import train_test_split
-
-
+from utils import gen_binary_list_at_least_one_one, gen_binary_list_non_mutation_one, gen_binary_list_all_mutation_one, gen_binary_list_non_all_mutation_one
 
 
 gene_length=10
@@ -29,13 +28,13 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
     data_list=[]
     label_list=[]
     bag_label_list=[]
-    num_casual_snp_list=random.choices(range(1,max_present),k=num_genes)
+    num_casual_snp_list=random.choices(range(0,max_present+1),k=num_genes)
     
     for k in range(0,num_genes):
         data=[[]]*gene_length
         label=[]
         
-        present_snp=random.sample(range(gene_length), num_casual_snp_list[k])
+        present_snp=random.sample(range(gene_length+1), num_casual_snp_list[k])
         present_list=np.zeros(gene_length)
         for l in present_snp:
             present_list[l]=1
@@ -89,13 +88,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
     test_bag_label_list = bag_label_list[num_genes_train:]
 
 
-    
-    # TODO:
-    # if true_prob<0.2: 
-    #     ind=[i for i, x in enumerate(bag_label_list) if x]
-    #     ind_withreplace=random.choice(ind, size=num_genes*0.2)
-
-    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list, 
+    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list
 
 # train_data_list, train_bag_label_list, train_label_list, test_data_list, test_label_list, test_bag_label_list=generate_samples(gene_length=10,
 # max_present=8,num_casual_snp=2,num_genes_train=200,num_genes_test=200,interaction=True)
@@ -110,13 +103,144 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
 #     labels=data[1]
 #     print(labels)
 
-def get_weight(bag_label_list):
 
-    true_prob=np.array(bag_label_list).sum()/len(bag_label_list)
-    false_prob=1-true_prob
-    bag_class_weight=[1/true_prob,1/false_prob]
 
-    return bag_class_weight
+
+
+def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False):
+    #this function generate the true and false sample seperately to achieve the predefined prevalence
+
+    # define the total number of genes and calculate the number of true and false gene
+    num_genes=num_genes_train+num_genes_test
+    num_genes_true=int(prevalence*num_genes)
+    num_genes_false=int((1-prevalence)*num_genes)
+
+    # generate the casual snp position list
+    target_mutation_pos=random.sample(range(gene_length+1),num_casual_snp)
+
+    data_list_true=[]
+    label_list_true=[]
+    bag_label_list_true=[]
+    data_list_false=[]
+    label_list_false=[]
+    bag_label_list_false=[]
+
+    # generate true samples
+    for i in range(0, num_genes_true):
+        single_labels=[]
+        data=[[]]*gene_length
+        num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
+        
+        if interaction:
+            present_list=gen_binary_list_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+            bag_label_check=[present_list[i] for i in target_mutation_pos]
+            bag_label=all(bag_label_check)
+            
+
+        else:
+            present_list=gen_binary_list_at_least_one_one(gene_length,target_mutation_pos, num_snp_present)
+            bag_label_check=[present_list[i] for i in target_mutation_pos]
+            bag_label=any(bag_label_check)
+
+            
+        for index in range(gene_length):
+            values = randint(0, 3)
+            item= [[index,values,present_list[index]]]
+            data[index]=item
+
+        
+        for g in range(gene_length):
+            if ((present_list[g]==1) & (g in target_mutation_pos)):
+               label=True
+            else:
+               label=False    
+            single_labels.append(label)
+        
+        
+
+        data_list_true.append(data)
+        label_list_true.append(single_labels)
+        bag_label_list_true.append(bag_label)
+        if not all(bag_label_list_true):
+            print("there is something wrong with true bag")
+        
+
+    # generate false samples
+    for j in range(0, num_genes_false):
+        single_labels=[]
+        data=[[]]*gene_length
+        num_snp_present=random.choices(range(0,max_present+1),k=1)[0]
+        
+        if interaction:
+           present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+           bag_label_check=[present_list[i] for i in target_mutation_pos]
+           bag_label=all(bag_label_check)
+
+        else:
+           present_list=gen_binary_list_non_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+           bag_label_check=[present_list[i] for i in target_mutation_pos]
+           bag_label=any(bag_label_check)
+            
+        for index in range(gene_length):
+            values = randint(0, 3)
+            item= [[index,values,present_list[index]]]
+            data[index]=item
+
+        for g in range(gene_length):
+            if ((present_list[g]==1) & (g in target_mutation_pos)):
+               label=True
+            else:
+               label=False         
+            single_labels.append(label)
+
+        
+
+        data_list_false.append(data)
+        label_list_false.append(single_labels)
+        bag_label_list_false.append(False)
+        if any(bag_label_list_false):
+            print("there is something wrong with false bag")
+
+    #Combine the true and false back then shuffle them
+    data_list= data_list_true + data_list_false 
+    label_list=label_list_true+label_list_false
+    bag_label_list=bag_label_list_true+bag_label_list_false
+
+    temp=list(zip(data_list, label_list, bag_label_list))
+    random.shuffle(temp)
+    data_list_out, label_list_out, bag_label_list_out=zip(*temp)
+    data_list_out, label_list_out, bag_label_list_out=list(data_list_out), list(label_list_out), list(bag_label_list_out)
+
+
+
+    # output the train and test set seperately
+    train_data_list=data_list[:num_genes_train]
+    test_data_list=data_list[num_genes_train:]
+
+    train_label_list= label_list[:num_genes_train]
+    test_label_list= label_list[num_genes_train:]
+
+    train_bag_label_list= bag_label_list[:num_genes_train]
+    test_bag_label_list = bag_label_list[num_genes_train:]
+   
+
+    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list
+
+
+gene_length=10
+max_present=3
+num_casual_snp=4
+num_genes_train=10
+num_genes_test=8
+prevalence=0.2
+interaction=False
+
+
+train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False)
+
+
+
+
 
 
 

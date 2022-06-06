@@ -8,7 +8,7 @@ import torch
 import torch.utils.data as data_utils
 import torch.optim as optim
 from torch.autograd import Variable
-from toy_gwas_loader import generate_samples, get_weight
+from toy_gwas_loader import generate_samples
 from model_gwas import Attention, GatedAttention
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
@@ -18,6 +18,7 @@ import os
 from collections import Counter
 import random
 import collections
+from utils import get_weight
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy Example')
