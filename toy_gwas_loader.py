@@ -21,6 +21,8 @@ num_in_train=2
 def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, interaction=False):
     # generate some toy sample of GWAS data with integers
     # gene_length=np.int(np.random.normal(gene_length_mean,gene_length_var,1))
+    random.seed(1)
+    np.random.seed(4)
     num_genes=num_genes_train+num_genes_test
 
     target_mutation_pos=random.sample(range(gene_length),num_casual_snp)
@@ -34,7 +36,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
         data=[[]]*gene_length
         label=[]
         
-        present_snp=random.sample(range(gene_length+1), num_casual_snp_list[k])
+        present_snp=random.sample(range(gene_length), num_casual_snp_list[k])
         present_list=np.zeros(gene_length)
         for l in present_snp:
             present_list[l]=1
@@ -109,6 +111,8 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
 
 def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False):
     #this function generate the true and false sample seperately to achieve the predefined prevalence
+    random.seed(1)
+    np.random.seed(4)
 
     # define the total number of genes and calculate the number of true and false gene
     num_genes=num_genes_train+num_genes_test
@@ -129,15 +133,16 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     for i in range(0, num_genes_true):
         single_labels=[]
         data=[[]]*gene_length
-        num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
         
         if interaction:
+            num_snp_present=random.choices(range(len(target_mutation_pos),max_present+1),k=1)[0]
             present_list=gen_binary_list_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=all(bag_label_check)
             
 
         else:
+            num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
             present_list=gen_binary_list_at_least_one_one(gene_length,target_mutation_pos, num_snp_present)
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=any(bag_label_check)
@@ -206,6 +211,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     label_list=label_list_true+label_list_false
     bag_label_list=bag_label_list_true+bag_label_list_false
 
+
     temp=list(zip(data_list, label_list, bag_label_list))
     random.shuffle(temp)
     data_list_out, label_list_out, bag_label_list_out=zip(*temp)
@@ -214,31 +220,32 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
 
     # output the train and test set seperately
-    train_data_list=data_list[:num_genes_train]
-    test_data_list=data_list[num_genes_train:]
+    train_data_list=data_list_out[:num_genes_train]
+    test_data_list=data_list_out[num_genes_train:]
 
-    train_label_list= label_list[:num_genes_train]
-    test_label_list= label_list[num_genes_train:]
+    train_label_list= label_list_out[:num_genes_train]
+    test_label_list= label_list_out[num_genes_train:]
 
-    train_bag_label_list= bag_label_list[:num_genes_train]
-    test_bag_label_list = bag_label_list[num_genes_train:]
+    train_bag_label_list= bag_label_list_out[:num_genes_train]
+    test_bag_label_list =bag_label_list_out[num_genes_train:]
    
 
     return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list
 
 
-gene_length=10
-max_present=3
-num_casual_snp=4
-num_genes_train=10
-num_genes_test=8
-prevalence=0.2
-interaction=False
+# gene_length=10
+# max_present=8
+# num_casual_snp=4
+# num_genes_train=10
+# num_genes_test=8
+# prevalence=0.2
+# interaction=False
 
 
-train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False)
+# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=True)
 
-
+# print(train_data_list[0])
+# print(test_data_list[0])
 
 
 

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from code import interact
 from tkinter import Label
 
 import numpy as np
@@ -8,7 +9,7 @@ import torch
 import torch.utils.data as data_utils
 import torch.optim as optim
 from torch.autograd import Variable
-from toy_gwas_loader import generate_samples
+from toy_gwas_loader import generate_samples, generate_samples_prev
 from model_gwas import Attention, GatedAttention
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
@@ -28,15 +29,9 @@ parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5, metavar='R',
                     help='weight decay')
-parser.add_argument('--target_number', type=int, default=9, metavar='T',
-                    help='bags have a positive labels if they contain at least one 9')
-parser.add_argument('--mean_bag_length', type=int, default=10, metavar='ML',
-                    help='average bag length')
-parser.add_argument('--var_bag_length', type=int, default=2, metavar='VL',
-                    help='variance of bag length')
-parser.add_argument('--num_bags_train', type=int, default=200, metavar='NTrain',
+parser.add_argument('--num_bags_train', type=int, default=800, metavar='NTrain',
                     help='number of bags in training set')
-parser.add_argument('--num_bags_test', type=int, default=50, metavar='NTest',
+parser.add_argument('--num_bags_test', type=int, default=200, metavar='NTest',
                     help='number of bags in test set')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
@@ -44,24 +39,46 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
 
+
+parser.add_argument('--num_snp',type=int, default=10,help='--number of SNP in every sample')
+parser.add_argument('--max_present',type=int, default=8, help='maximun number of present SNP in every sample')
+parser.add_argument('--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
+parser.add_argument('--interaction',type=int,default=True, help='if assume there is interaction between casual SNP')
+parser.add_argument('--oversampling',type=bool,default=True, help='if using upsampling in training')
+parser.add_argument('--weight_loss',type=bool,default=True, help='if using weighted loss in training')
+parser.add_argument('--prevalence',type=float,default=0.3, help='the ratio of true bag and false bag in generated samples')
+parser.add_argument('--control_prevalence',type=bool,default=True, help='if we control prevalence when generating samples')
+
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 torch.manual_seed(args.seed)
+np.random.seed(args.seed)
+random.seed(args.seed)
+
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
+    random.seed(args.seed)
     print('\nGPU is ON!')
 
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=10,max_present=8,num_casual_snp=3,num_genes_train=1000,num_genes_test=300,interaction=True)
+if args.control_prevalence:
+    # prevalence as parameter sample generation
+    data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test=generate_samples_prev(gene_length=args.num_snp, max_present=args.max_present ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction)
+
+else:
+    # without controling prevalence sample generation
+    data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=args.num_snp,max_present=args.max_present,num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction)
+
+
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
 
 
-overampling=True
+overampling=args.oversampling
 
 if (1/bag_class_weight_train[0]<0.2) & (overampling==True):
     print('Using resampling')
@@ -135,7 +152,7 @@ def train(epoch,bag_class_weight_train, weight):
         # calculate loss and metrics
         loss, _ = model.calculate_objective(data, bag_label)
 
-        if weight:
+        if args.weight_loss:
             if bag_label:
                 weighted_loss=bag_class_weight_train[0]*loss
             else:
@@ -168,8 +185,13 @@ def test(PATH):
     elif args.model=='gated_attention':
         model = GatedAttention()
     optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
+    if args.control_prevalence:
+        PATH_LOAD=PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 
-    checkpoint = torch.load(PATH)
+    else:
+        PATH_LOAD=PATH+'/nsnp{}_max{}_csnp{}_i{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+
+    checkpoint = torch.load(PATH_LOAD)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     epoch = checkpoint['epoch']
@@ -313,13 +335,15 @@ def test(PATH):
 
     plt.tight_layout()
 
+    # plt.show()
+    SAVING_PATH=os.getcwd()+'/plots'
+    os.makedirs(SAVING_PATH, exist_ok=True)
+    if args.prevalence:
+        PLOT_PATH=SAVING_PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 
-
-    plt.show()
-    
-
-
-
+    else:
+        PLOT_PATH=SAVING_PATH+'/nsnp{}_max{}_csnp{}_i{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+    plt.savefig(PLOT_PATH)
 
 
 
@@ -327,7 +351,15 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints/test.pt'
+    PATH=working_dir+'/checkpoints'
+
+    os.makedirs(PATH, exist_ok=True)
+    if args.control_prevalence:
+        PATH_SAVE=PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
+
+    else:
+        PATH_SAVE=PATH+'/nsnp{}_max{}_csnp{}_i{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+    
 
     min_loss=100
     for epoch in range(1, args.epochs + 1):
@@ -338,7 +370,7 @@ if __name__ == "__main__":
             epoch_min=epoch
 
     #save checkpoint of the model
-    torch.save({'epoch':epoch_min, 'model_state_dict': model.state_dict(),'optimizer_state_dict': optimizer.state_dict(),'loss':min_loss}, PATH)
+    torch.save({'epoch':epoch_min, 'model_state_dict': model.state_dict(),'optimizer_state_dict': optimizer.state_dict(),'loss':min_loss}, PATH_SAVE)
 
     print('Start Testing')
     print('training weight:', bag_class_weight_test)
