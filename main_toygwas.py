@@ -23,7 +23,7 @@ from utils import get_weight
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy Example')
-parser.add_argument('--epochs', type=int, default=20, metavar='N',
+parser.add_argument('--epochs', type=int, default=25, metavar='N',
                     help='number of epochs to train (default: 20)')
 parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
                     help='learning rate (default: 0.0005)')
@@ -39,8 +39,7 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
 
-
-parser.add_argument('--num_snp',type=int, default=10,help='--number of SNP in every sample')
+parser.add_argument('--num_snp',type=int, default=10,help='number of SNP in every sample')
 parser.add_argument('--max_present',type=int, default=8, help='maximun number of present SNP in every sample')
 parser.add_argument('--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
 parser.add_argument('--interaction',type=int,default=True, help='if assume there is interaction between casual SNP')
