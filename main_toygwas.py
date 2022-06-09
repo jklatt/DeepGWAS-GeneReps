@@ -40,7 +40,7 @@ parser.add_argument('--model', type=str, default='attention', help='Choose b/w a
 parser.add_argument('-nsnp','--num_snp',type=int, default=10,help='number of SNP in every sample')
 parser.add_argument('-maxp','--max_present',type=int, default=8,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
-parser.add_argument('-int','--interaction',type=int,default=True,  help='if assume there is interaction between casual SNP')
+parser.add_argument('-int','--interaction',type=bool,default=True,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
 parser.add_argument('-pre','--prevalence',type=float,default=0.3, help='the ratio of true bag and false bag in generated samples')
