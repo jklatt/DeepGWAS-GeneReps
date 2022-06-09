@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 import random
 
-from main_toygwas_jk import train_test_split
+
 from utils import gen_binary_list_at_least_one_one, gen_binary_list_non_mutation_one, gen_binary_list_all_mutation_one, gen_binary_list_non_all_mutation_one
 
 

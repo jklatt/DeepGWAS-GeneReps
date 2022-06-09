@@ -1,12 +1,13 @@
 from __future__ import print_function
-from code import interact
-from tkinter import Label
+# from code import interact
+# from tkinter import Label
 
 import numpy as np
 
 import argparse
+from args import Configuration
 import torch
-import torch.utils.data as data_utils
+# import torch.utils.data as data_utils
 import torch.optim as optim
 from torch.autograd import Variable
 from toy_gwas_loader import generate_samples, generate_samples_prev
@@ -16,37 +17,36 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 import os
 
-from collections import Counter
+# from collections import Counter
 import random
-import collections
+# import collections
 from utils import get_weight
 
 # Training settings
-parser = argparse.ArgumentParser(description='PyTorch GWAS Toy Example')
-parser.add_argument('--epochs', type=int, default=25, metavar='N',
-                    help='number of epochs to train (default: 20)')
-parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
+parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
+
+parser.add_argument('--epochs', type=int, default=1,)
+parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
-parser.add_argument('--reg', type=float, default=10e-5, metavar='R',
+parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
-parser.add_argument('--num_bags_train', type=int, default=800, metavar='NTrain',
+parser.add_argument('--num_bags_train', type=int, default=800, 
                     help='number of bags in training set')
-parser.add_argument('--num_bags_test', type=int, default=200, metavar='NTest',
+parser.add_argument('--num_bags_test', type=int, default=200,
                     help='number of bags in test set')
-parser.add_argument('--seed', type=int, default=1, metavar='S',
+parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
-
-parser.add_argument('--num_snp',type=int, default=10,help='number of SNP in every sample')
-parser.add_argument('--max_present',type=int, default=8, help='maximun number of present SNP in every sample')
-parser.add_argument('--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
-parser.add_argument('--interaction',type=int,default=True, help='if assume there is interaction between casual SNP')
-parser.add_argument('--oversampling',type=bool,default=True, help='if using upsampling in training')
-parser.add_argument('--weight_loss',type=bool,default=True, help='if using weighted loss in training')
-parser.add_argument('--prevalence',type=float,default=0.3, help='the ratio of true bag and false bag in generated samples')
-parser.add_argument('--control_prevalence',type=bool,default=True, help='if we control prevalence when generating samples')
+parser.add_argument('-nsnp','--num_snp',type=int, default=10,help='number of SNP in every sample')
+parser.add_argument('-maxp','--max_present',type=int, default=8,  help='maximun number of present SNP in every sample')
+parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
+parser.add_argument('-int','--interaction',type=int,default=True,  help='if assume there is interaction between casual SNP')
+parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
+parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
+parser.add_argument('-pre','--prevalence',type=float,default=0.3, help='the ratio of true bag and false bag in generated samples')
+parser.add_argument('-cprevalene','--control_prevalence',type=bool,default=True,   help='if we control prevalence when generating samples')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
