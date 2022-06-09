@@ -73,6 +73,8 @@ else:
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
+if args.cuda:
+    bag_class_weight_train.cuda()
 
 
 overampling=args.oversampling
