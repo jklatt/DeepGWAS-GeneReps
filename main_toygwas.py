@@ -3,9 +3,7 @@ from __future__ import print_function
 # from tkinter import Label
 
 import numpy as np
-
 import argparse
-from args import Configuration
 import torch
 # import torch.utils.data as data_utils
 import torch.optim as optim
@@ -17,9 +15,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 import os
 
-# from collections import Counter
+from collections import Counter
 import random
-# import collections
+import collections
 from utils import get_weight
 
 # Training settings
