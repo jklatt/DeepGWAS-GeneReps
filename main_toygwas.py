@@ -23,7 +23,7 @@ from utils import get_weight
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
-parser.add_argument('--epochs', type=int, default=1,)
+parser.add_argument('--epochs', type=int, default=20,)
 parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
@@ -77,6 +77,7 @@ if args.cuda:
     bag_class_weight_train=np.array(bag_class_weight_train)
     bag_class_weight_train=torch.from_numpy(bag_class_weight_train)
     bag_class_weight_train.cuda()
+    # print("weight is on cuda", bag_class_weight_train.get_device())
 
 
 overampling=args.oversampling
@@ -142,15 +143,19 @@ def train(epoch,bag_class_weight_train, weight):
     train_error = 0.
     for batch_idx, (data, bag_label, label) in enumerate(train_loader):
         # bag_label = label[0]
+        data=data.type(torch.FloatTensor)
         if args.cuda:
             data, bag_label = data.cuda(), bag_label.cuda()
+            # print("data is on", data.get_device())
+            # print("bag_label is on", bag_label.get_device())
         data, bag_label = Variable(data), Variable(bag_label)
         # print('\ndata: ',data)
         # print('\nlabel:',bag_label)
 
         # reset gradients
         optimizer.zero_grad()
-        # calculate loss and metrics
+
+        # calculate loss and metrics 
         loss, _ = model.calculate_objective(data, bag_label)
 
         if args.weight_loss:
@@ -199,6 +204,9 @@ def test(PATH):
     loss = checkpoint['loss']
     print('We use the model in traing epoch', epoch, 'the loss was', float(loss))
 
+    if args.cuda:
+        model.cuda()
+
     model.eval()
     test_loss = 0.
     test_error = 0.
@@ -216,6 +224,7 @@ def test(PATH):
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
         # bag_label = label[0]
         instance_labels = label
+        data=data.type(torch.FloatTensor)
         if args.cuda:
             data, bag_label = data.cuda(), bag_label.cuda()
         data, bag_label = Variable(data), Variable(bag_label)
@@ -227,9 +236,9 @@ def test(PATH):
         y_prob,_ ,_ = model.forward(data)
         y_prob=torch.clamp(y_prob, min=1e-5, max=1. - 1e-5)
 
-        true_label_list.append(bag_label)
-        pred_label_list.append(predicted_label)
-        y_prob_list.append(y_prob.detach().numpy())
+        true_label_list.append(bag_label.cpu().data.numpy())
+        pred_label_list.append(predicted_label.cpu().data.numpy())
+        y_prob_list.append(y_prob.cpu().data.numpy()[0])
 
         if predicted_label.cpu().data.numpy()[0][0]==1:
            attention_array=attention_weights.cpu().data.numpy()[0]

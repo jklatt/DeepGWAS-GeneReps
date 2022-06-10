@@ -48,8 +48,9 @@ class Attention(nn.Module):
 
     def forward(self, x):
         x = x.squeeze(0)
-        x = x.type(torch.FloatTensor)#added type change
+        # x = x.type(torch.FloatTensor)#added type change
         H = self.feature_extractor_part1(x)
+
         H = H.view(-1, 10)
         # H = H.view(-1, 30)
         H = self.feature_extractor_part2(H)  # NxL
@@ -132,7 +133,7 @@ class GatedAttention(nn.Module):
 
     def forward(self, x):
         x = x.squeeze(0)
-        x = x.type(torch.FloatTensor)#added type change
+        # x = x.type(torch.FloatTensor)#added type change
 
         H = self.feature_extractor_part1(x)
         H = H.view(-1, 10)
@@ -165,7 +166,6 @@ class GatedAttention(nn.Module):
         Y_prob, _, A = self.forward(X)
         Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
 
-        #TODO: where potentially adding some weight to class imbalance
         neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli 
 
 
