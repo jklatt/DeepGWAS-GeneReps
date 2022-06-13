@@ -1,3 +1,4 @@
+from idna import valid_label_length
 import numpy as np
 from numpy.random import seed
 from numpy.random import randint
@@ -23,7 +24,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
     # gene_length=np.int(np.random.normal(gene_length_mean,gene_length_var,1))
     random.seed(1)
     np.random.seed(4)
-    num_genes=num_genes_train+num_genes_test
+    num_genes=num_genes_train+num_genes_test+num_genes_test
 
     target_mutation_pos=random.sample(range(gene_length),num_casual_snp)
     
@@ -81,16 +82,22 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
         
     
     train_data_list=data_list[:num_genes_train]
-    test_data_list=data_list[num_genes_train:]
+    test_data_list=data_list[num_genes_train:num_genes_train+num_genes_test]
+    val_data_list=data_list[num_genes_train+num_genes_test:]
+
 
     train_label_list= label_list[:num_genes_train]
-    test_label_list= label_list[num_genes_train:]
+    test_label_list= label_list[num_genes_train:num_genes_train+num_genes_test]
+    val_label_list= label_list[num_genes_train+num_genes_test:]
+
 
     train_bag_label_list= bag_label_list[:num_genes_train]
-    test_bag_label_list = bag_label_list[num_genes_train:]
+    test_bag_label_list = bag_label_list[num_genes_train:num_genes_train+num_genes_test]
+    val_bag_label_list=bag_label_list[num_genes_train+num_genes_test:]
 
 
-    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list
+
+    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,val_bag_label_list,val_label_list
 
 # train_data_list, train_bag_label_list, train_label_list, test_data_list, test_label_list, test_bag_label_list=generate_samples(gene_length=10,
 # max_present=8,num_casual_snp=2,num_genes_train=200,num_genes_test=200,interaction=True)
@@ -115,7 +122,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     np.random.seed(4)
 
     # define the total number of genes and calculate the number of true and false gene
-    num_genes=num_genes_train+num_genes_test
+    num_genes=num_genes_train+num_genes_test+num_genes_test
     num_genes_true=int(prevalence*num_genes)
     num_genes_false=int((1-prevalence)*num_genes)
 
@@ -221,16 +228,19 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
     # output the train and test set seperately
     train_data_list=data_list_out[:num_genes_train]
-    test_data_list=data_list_out[num_genes_train:]
+    test_data_list=data_list_out[num_genes_train:num_genes_train+num_genes_test]
+    val_data_list=data_list_out[num_genes_train+num_genes_test:]
+    
 
     train_label_list= label_list_out[:num_genes_train]
-    test_label_list= label_list_out[num_genes_train:]
+    test_label_list= label_list_out[num_genes_train:num_genes_train+num_genes_test]
+    valid_label_list=label_list_out[num_genes_train+num_genes_test:]
 
     train_bag_label_list= bag_label_list_out[:num_genes_train]
-    test_bag_label_list =bag_label_list_out[num_genes_train:]
-   
+    test_bag_label_list =bag_label_list_out[num_genes_train:num_genes_train+num_genes_test]
+    val_bag_label_list=bag_label_list_out[num_genes_train+num_genes_test:]
 
-    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list
+    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list
 
 
 # gene_length=10
