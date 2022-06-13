@@ -23,7 +23,7 @@ from utils import get_weight
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
-parser.add_argument('--epochs', type=int, default=20,)
+parser.add_argument('--epochs', type=int, default=50,)
 parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
@@ -43,7 +43,7 @@ parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='numb
 parser.add_argument('-int','--interaction',type=bool,default=True,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
-parser.add_argument('-pre','--prevalence',type=float,default=0.3, help='the ratio of true bag and false bag in generated samples')
+parser.add_argument('-pre','--prevalence',type=float,default=0.1, help='the ratio of true bag and false bag in generated samples')
 parser.add_argument('-cprevalene','--control_prevalence',type=bool,default=True,   help='if we control prevalence when generating samples')
 
 args = parser.parse_args()
@@ -84,7 +84,7 @@ overampling=args.oversampling
 
 if (1/bag_class_weight_train[0]<0.2) & (overampling==True):
     print('Using resampling')
-    true_bag=[i for i, x in enumerate(bag_label_list_train) if x[0]]
+    true_bag=[i for i, x in enumerate(bag_label_list_train) if x]
     res_ind=random.choices(true_bag,k=int(len(bag_label_list_train)*0.5))
     counter=collections.Counter(res_ind)
 
