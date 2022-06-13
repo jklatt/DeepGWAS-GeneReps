@@ -19,6 +19,7 @@ from collections import Counter
 import random
 import collections
 from utils import get_weight
+from torch.utils.tensorboard import SummaryWriter
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
@@ -63,11 +64,13 @@ loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 if args.control_prevalence:
     # prevalence as parameter sample generation
-    data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test=generate_samples_prev(gene_length=args.num_snp, max_present=args.max_present ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction)
+    data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test,val_data_list,val_label_list, val_bag_label_list=generate_samples_prev(gene_length=args.num_snp, 
+    max_present=args.max_present ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction)
 
 else:
     # without controling prevalence sample generation
-    data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test=generate_samples(gene_length=args.num_snp,max_present=args.max_present,num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction)
+    data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test,val_data_list,val_bag_label_list,val_label_list=generate_samples(gene_length=args.num_snp,
+    max_present=args.max_present,num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction)
 
 
 
@@ -115,11 +118,13 @@ elif 1/bag_class_weight_train[0]<0.2:
 
 
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
-
 train_loader =DataLoader(train_data,batch_size=1, shuffle=True)
 
 test_data=TensorDataset(torch.tensor(data_list_test,dtype=torch.int32),torch.tensor(bag_label_list_test),torch.tensor(label_list_test))
 test_loader =DataLoader(test_data,batch_size=1, shuffle=False)
+
+validation_data=TensorDataset(torch.tensor(val_data_list,dtype=torch.int32),torch.tensor(val_bag_label_list),torch.tensor(val_label_list))
+validation_loader =DataLoader(validation_data,batch_size=1, shuffle=False)
 
 
 sharedParams = {'weight_train': bag_class_weight_train,
@@ -141,6 +146,7 @@ def train(epoch,bag_class_weight_train, weight):
     model.train()
     train_loss = 0.
     train_error = 0.
+    
     for batch_idx, (data, bag_label, label) in enumerate(train_loader):
         # bag_label = label[0]
         data=data.type(torch.FloatTensor)
@@ -175,12 +181,35 @@ def train(epoch,bag_class_weight_train, weight):
         # step
         optimizer.step()
 
+
     # calculate loss and error for epoch
     train_loss /= len(train_loader)
     train_error /= len(train_loader)
 
+
     print('Epoch: {}, Loss: {:.4f}, Train error: {:.4f}'.format(epoch, train_loss.cpu().numpy()[0], train_error))
     return train_loss
+
+def val():
+    model.eval()
+    val_loss = 0.
+    val_error = 0.
+    for batch_idx, (data, bag_label, label) in enumerate(validation_loader):
+        data=data.type(torch.FloatTensor)
+
+        if args.cuda:
+            data, bag_label = data.cuda(), bag_label.cuda()
+        data, bag_label = Variable(data), Variable(bag_label)
+        loss, attention_weights = model.calculate_objective(data, bag_label)
+        val_loss += loss.data[0]
+        error, predicted_label = model.calculate_classification_error(data, bag_label)
+        val_error += error
+
+    val_error /= len(validation_loader)
+    val_loss /= len(validation_loader)
+
+    return val_loss
+
 
 
 def test(PATH):
@@ -257,8 +286,6 @@ def test(PATH):
 
            
 
-
-
         if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
             bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
             instance_level = list(zip(instance_labels.numpy()[0].tolist(),
@@ -305,6 +332,7 @@ def test(PATH):
 
 
     figure, axis = plt.subplots(2, 2, figsize=(7, 7))
+    figure.suptitle('nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence), fontsize=16)
 
     axis[0, 0].set_title('Bag level ROC')
     axis[0, 0].plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
@@ -355,7 +383,8 @@ def test(PATH):
         PLOT_PATH=SAVING_PATH+'/nsnp{}_max{}_csnp{}_i{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
     plt.savefig(PLOT_PATH)
 
-
+#early stopping criteria
+n_epochs_stop = 6
 
 if __name__ == "__main__":
     print('Start Training')
@@ -371,13 +400,37 @@ if __name__ == "__main__":
         PATH_SAVE=PATH+'/nsnp{}_max{}_csnp{}_i{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
     
 
-    min_loss=100
+    min_loss=np.inf
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
+        val_loss=val()
 
-        if train_loss<min_loss:
-            min_loss=train_loss
+        os.makedirs("./tensorboard_logs", exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs'+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+
+        writer.add_scalar('training loss',
+                            train_loss/ epoch, epoch)
+        writer.add_scalar('validation loss',
+                            val_loss/ epoch, epoch)
+  
+
+        # for saving best model and check early stoping criteria
+        if val_loss< min_loss:
+            min_loss=val_loss
             epoch_min=epoch
+            epochs_no_improve = 0
+
+        else:
+            epochs_no_improve += 1
+
+        if epoch > 5 and epochs_no_improve == n_epochs_stop:
+            print('Early stopping!' )
+            early_stop = True
+            break
+        else:
+            continue
+        
+
 
     #save checkpoint of the model
     torch.save({'epoch':epoch_min, 'model_state_dict': model.state_dict(),'optimizer_state_dict': optimizer.state_dict(),'loss':min_loss}, PATH_SAVE)
@@ -385,3 +438,5 @@ if __name__ == "__main__":
     print('Start Testing')
     print('training weight:', bag_class_weight_test)
     test(PATH)
+
+
