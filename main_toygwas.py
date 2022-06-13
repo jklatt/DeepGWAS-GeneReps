@@ -39,9 +39,9 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
 parser.add_argument('-nsnp','--num_snp',type=int, default=10,help='number of SNP in every sample')
-parser.add_argument('-maxp','--max_present',type=int, default=8,  help='maximun number of present SNP in every sample')
+parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
-parser.add_argument('-int','--interaction',type=bool,default=True,  help='if assume there is interaction between casual SNP')
+parser.add_argument('-int','--interaction',type=bool,default=False,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
 parser.add_argument('-pre','--prevalence',type=float,default=0.1, help='the ratio of true bag and false bag in generated samples')
@@ -65,12 +65,12 @@ loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 if args.control_prevalence:
     # prevalence as parameter sample generation
     data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test,val_data_list,val_label_list, val_bag_label_list=generate_samples_prev(gene_length=args.num_snp, 
-    max_present=args.max_present ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction)
+    max_present=int(args.max_present*args.num_snp) ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction)
 
 else:
     # without controling prevalence sample generation
     data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test,val_data_list,val_bag_label_list,val_label_list=generate_samples(gene_length=args.num_snp,
-    max_present=args.max_present,num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction)
+    max_present=int(args.max_present*args.num_snp),num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction)
 
 
 
