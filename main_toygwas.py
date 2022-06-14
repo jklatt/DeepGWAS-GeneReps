@@ -1,4 +1,5 @@
 from __future__ import print_function
+from ast import arg
 # from code import interact
 # from tkinter import Label
 
@@ -38,10 +39,10 @@ parser.add_argument('--seed', type=int, default=1,
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
-parser.add_argument('-nsnp','--num_snp',type=int, default=10,help='number of SNP in every sample')
+parser.add_argument('-nsnp','--num_snp',type=int, default=200,help='number of SNP in every sample')
 parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
-parser.add_argument('-int','--interaction',type=bool,default=False,  help='if assume there is interaction between casual SNP')
+parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
 parser.add_argument('-pre','--prevalence',type=float,default=0.1, help='the ratio of true bag and false bag in generated samples')
@@ -49,6 +50,7 @@ parser.add_argument('-cprevalene','--control_prevalence',type=bool,default=True,
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
+print(args)
 
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
@@ -61,6 +63,12 @@ if args.cuda:
 
 print('Load Train and Test Set')
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
+
+#converting tshe 1 0 into boolean value
+if args.interaction==1:
+    args.interaction=True
+else:
+    args.interaction=False
 
 if args.control_prevalence:
     # prevalence as parameter sample generation
@@ -384,7 +392,7 @@ def test(PATH):
     plt.savefig(PLOT_PATH)
 
 #early stopping criteria
-n_epochs_stop = 6
+n_epochs_stop = 20
 
 if __name__ == "__main__":
     print('Start Training')
