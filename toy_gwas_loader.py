@@ -43,7 +43,7 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
             present_list[l]=1
 
         for i in range(0,gene_length):
-            values = randint(0, 3)
+            values = randint(0, 4)
             present=present_list[i]
 
             if  i in target_mutation_pos and present==1:
@@ -156,7 +156,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
             
         for index in range(gene_length):
-            values = randint(0, 3)
+            values = randint(0, 4)
             item= [[index,values,present_list[index]]]
             data[index]=item
 

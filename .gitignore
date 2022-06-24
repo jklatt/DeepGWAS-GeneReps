@@ -1,3 +1,14 @@
+
+
+A_thaliana/__pycache__
+A_thaliana/X_genic/
+A_thaliana/X_genic_full/
+A_thaliana/gene2snp/
+A_thaliana/max_present_stat/
+A_thaliana/plots/
+A_thaliana/chr_gen_pos_dictionary.pkl
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
