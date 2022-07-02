@@ -21,10 +21,10 @@ parser.add_argument('--chr',default=1)
 args = parser.parse_args()
 
 # this function is to find the per gene per sample level statistics.
-chr_ = load_file('/home/zixshu/DeepGWAS/A_thaliana/chr_gen_pos_dictionary.pkl')
+chr_ = load_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/chr_gen_pos_dictionary.pkl')
 
-(_, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_{}.bed").format(args.maf),verbose=False) 
-bim = pd.read_csv("/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_{}.bim".format(args.maf), sep = '\t', header = None, names = ['chrom', 'name', '-', 'pos', '/', '.'])
+(_, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bed").format(args.maf),verbose=False) 
+bim = pd.read_csv("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bim".format(args.maf), sep = '\t', header = None, names = ['chrom', 'name', '-', 'pos', '/', '.'])
 bed_mat=bed.compute()
 print(bed_mat.shape)
 

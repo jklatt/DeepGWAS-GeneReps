@@ -72,9 +72,9 @@ def parse_arguments():
 	# parser.add_argument('--gene2snp', default='/Users/ShelleyShu/Desktop/DeepGWAS/chr_gen_pos_dictionary.pkl',required = True)
 	# parser.add_argument('--bim',  default='/Users/ShelleyShu/Desktop/DeepGWAS/X_genic/X_genic_0.1.bim',  required = True)
 	# parser.add_argument('--outfile', default='/Users/ShelleyShu/Desktop/DeepGWAS/test.csv', required = True)
-	parser.add_argument('--gene2snp', default='/home/zixshu/DeepGWAS/A_thaliana/chr_gen_pos_dictionary.pkl')
-	parser.add_argument('--bim',  default='/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_0.1.bim')
-	parser.add_argument('--outfile', default='/home/zixshu/DeepGWAS/A_thaliana/X_genic_0.1.pkl')
+	parser.add_argument('--gene2snp', default='/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/chr_gen_pos_dictionary.pkl')
+	parser.add_argument('--bim',  default='/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_0.1.bim')
+	parser.add_argument('--outfile', default='/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic_0.1.pkl')
 	args = parser.parse_args()
 
 	return args

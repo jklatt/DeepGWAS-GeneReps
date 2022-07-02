@@ -5,8 +5,11 @@ A_thaliana/X_genic/
 A_thaliana/X_genic_full/
 A_thaliana/gene2snp/
 A_thaliana/max_present_stat/
-A_thaliana/plots/
+A_thaliana/plots_stat/
 A_thaliana/chr_gen_pos_dictionary.pkl
+A_thaliana/*slurm*
+A_thaliana/*png*
+A_thaliana/*csv*
 
 
 # Byte-compiled / optimized / DLL files

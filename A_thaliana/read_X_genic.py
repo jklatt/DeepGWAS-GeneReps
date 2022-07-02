@@ -36,7 +36,7 @@ import argparse
 # print(bed.compute())
 
 # MAF 0.01
-(bim, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_0.01.bed"),verbose=False)                  
+(bim, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_0.01.bed"),verbose=False)                  
 print(bim.head())
 print(fam.head())
 print(bim.shape)

@@ -17,10 +17,10 @@ parser.add_argument('--maf',required=True)
 args = parser.parse_args()
 
 # this function is to find the per gene per sample level statistics.
-chr_ = load_file('/home/zixshu/DeepGWAS/A_thaliana/chr_gen_pos_dictionary.pkl')
+chr_ = load_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/chr_gen_pos_dictionary.pkl')
 
-(_, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_{}.bed").format(args.maf),verbose=False) 
-bim = pd.read_csv("/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_{}.bim".format(args.maf), sep = '\t', header = None, names = ['chrom', 'name', '-', 'pos', '/', '.'])
+(_, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bed").format(args.maf),verbose=False) 
+bim = pd.read_csv("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bim".format(args.maf), sep = '\t', header = None, names = ['chrom', 'name', '-', 'pos', '/', '.'])
 bed_mat=bed.compute()
 print(bed_mat.shape)
 
@@ -61,7 +61,7 @@ for num, chrom in enumerate(np.array(['Chr1', 'Chr2', 'Chr3', 'Chr4', 'Chr5'])):
                 
 overll_minor_persample_pergene=list(np.concatenate(overll_minor_persample_pergene))
 # save_file('/home/zixshu/DeepGWAS/A_thaliana/max_present_stat/minor_present_percentage_{}MAF_chr{}.pkl'.format(args.maf, args.chr), overll_minor_persample_pergene)
-save_file('/home/zixshu/DeepGWAS/A_thaliana/max_present_stat/minor_present_percentage_all_{}MAF.pkl'.format(args.maf), overll_minor_persample_pergene)
+save_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/max_present_stat/minor_present_percentage_all_{}MAF.pkl'.format(args.maf), overll_minor_persample_pergene)
 
 print(pd.DataFrame(overll_minor_persample_pergene.describe()))
 

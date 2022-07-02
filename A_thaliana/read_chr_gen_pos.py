@@ -1,7 +1,7 @@
 import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
-with open('/home/zixshu/DeepGWAS/A_thaliana/chr_gen_pos_dictionary.pkl', 'rb') as f:
+with open('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/chr_gen_pos_dictionary.pkl', 'rb') as f:
 	 df=pickle.load(f)
 
 # print(df['Chr1'][0].shape)#(8433, 2)
@@ -25,5 +25,5 @@ print(pd.DataFrame(gene_length).describe())
 plt.hist(gene_length,bins=100)
 plt.title('gene_length_stat')
 plt.xlim(min(gene_length), max(gene_length))
-plt.savefig('/home/zixshu/DeepGWAS/A_thaliana/gene_length.png')
+plt.savefig('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/gene_length.png')
 
