@@ -11,6 +11,8 @@ A_thaliana/*slurm*
 A_thaliana/*png*
 A_thaliana/*csv*
 
+*csv*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

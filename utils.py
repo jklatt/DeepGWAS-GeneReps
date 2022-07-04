@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from typing import List
+import pickle
 
 def get_weight(bag_label_list):
     random.seed(1)
@@ -88,6 +89,20 @@ def gen_binary_list_non_mutation_one(gene_length: int, mutation_positions: List[
     for k in present_position:
         present_list[k]=1
     return present_list
+
+
+def save_file(filename, data):
+	'''
+	Function for saving file in the pickle format
+	Input
+	-----------
+	filename:  name of the output file
+	data:      data to save
+	Output
+	----------
+	'''
+	with open(filename, 'wb') as f:
+		pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
 
 
