@@ -46,7 +46,11 @@ def extract_dicts(train_parameter:str, file,evaluation_dict, evaluation_scores_t
 
 
 def plot_comparisions(evaluation_scores_true, variating_variable,interaction):
-    split_element=list(list(evaluation_scores_true.keys())[0])[list(list(evaluation_scores_true.keys())[0]).index('0')-1]
+    if 'snp' in variating_variable:
+        split_element=list(list(evaluation_scores_true.keys())[0])[list(list(evaluation_scores_true.keys())[0]).index('p')]
+    else:
+        split_element=list(list(evaluation_scores_true.keys())[0])[list(list(evaluation_scores_true.keys())[0]).index('0')-1]
+
     parameters=sorted(list(evaluation_scores_true.keys()), key=lambda x: float(x.split(split_element)[-1]))
 ## bag level roc
     figure, axis = plt.subplots(2, 2, figsize=(7, 7))
@@ -159,6 +163,58 @@ for file in filenames:
 
 plot_comparisions(evaluation_scores_true,'prevalence','True')
 plot_comparisions(evaluation_scores_false,'prevalence','False')
+
+
+
+# extracting number of casual SNP dictionary
+evaluation_scores_true={}
+evaluation_scores_false={}
+for file in filenames:
+    splited_name=file.split('_')
+    train_parameter=splited_name[2]
+
+    
+    if( ('nsnp20' in file ) and ('prevalence0.35.pkl' in file) and ('max0.94'in file) ):
+        if 'iTrue' in file:
+            evaluation_scores_true[train_parameter]={}
+
+        else:
+            evaluation_scores_false[train_parameter]={}
+
+        FILE_PATH=PATH+'/'+file
+        with open(FILE_PATH, "rb") as f:
+            evaluation_dict=pickle.load(f)
+
+        evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
+
+plot_comparisions(evaluation_scores_true,'csnp','True')
+plot_comparisions(evaluation_scores_false,'csnp','False')
+
+
+
+# extracting number of number of SNP dictionary
+evaluation_scores_true={}
+evaluation_scores_false={}
+for file in filenames:
+    splited_name=file.split('_')
+    train_parameter=splited_name[0]
+    
+    if(('prevalence0.35.pkl' in file) and ('csnp3' in file) and ('60' not in file) and ('80' not in file) and ('90' not in file) and ('nsnp20_max0.95' not in file)):
+        if 'iTrue' in file:
+            evaluation_scores_true[train_parameter]={}
+
+        else:
+            evaluation_scores_false[train_parameter]={}
+
+        FILE_PATH=PATH+'/'+file
+        with open(FILE_PATH, "rb") as f:
+            evaluation_dict=pickle.load(f)
+
+        evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
+
+plot_comparisions(evaluation_scores_true,'nsnp','True')
+plot_comparisions(evaluation_scores_false,'nsnp','False')
+
 
 
 
