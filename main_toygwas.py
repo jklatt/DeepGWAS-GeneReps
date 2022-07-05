@@ -26,7 +26,7 @@ import pickle
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
-parser.add_argument('--epochs', type=int, default=1,)
+parser.add_argument('--epochs', type=int, default=50,)
 parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
