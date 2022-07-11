@@ -400,10 +400,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_version1'
+    SAVING_PATH=os.getcwd()+'/plots_version2'
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_version1'
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_version2'
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -428,7 +428,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_version1'
+    PATH=working_dir+'/checkpoints_version2'
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -443,8 +443,8 @@ if __name__ == "__main__":
         train_loss=train(epoch,bag_class_weight_train,weight=True)
         val_loss=val()
 
-        os.makedirs("./tensorboard_logs_version1", exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_version1'+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_version2", exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_version2'+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

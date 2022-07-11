@@ -181,7 +181,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     for j in range(0, num_genes_false):
         single_labels=[]
         data=[[]]*gene_length
-        num_snp_present=random.choices(range(0,max_present+1),k=1)[0]
+        num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
         
         if interaction:
            present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)

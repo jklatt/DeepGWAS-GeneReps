@@ -104,12 +104,13 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction):
 
 
     plt.tight_layout()
-    plt.savefig('/home/zixshu/DeepGWAS/plots_version1_evaluation/var_{}_interaction{}.png'.format(variating_variable, interaction))
+    os.makedirs('/home/zixshu/DeepGWAS/plots_version2_evaluation', exist_ok=True)
+    plt.savefig('/home/zixshu/DeepGWAS/plots_version2_evaluation/var_{}_interaction{}.png'.format(variating_variable, interaction))
 
 
 
-PATH='/home/zixshu/DeepGWAS/metrics_version1'
-filenames=os.listdir('/home/zixshu/DeepGWAS/metrics_version1')
+PATH='/home/zixshu/DeepGWAS/metrics_version2'
+filenames=os.listdir('/home/zixshu/DeepGWAS/metrics_version2')
 
 # extracting max_present dictionary
 evaluation_scores_true={}
@@ -148,7 +149,7 @@ for file in filenames:
     train_parameter=splited_name[4].split('.p')[0]
 
     
-    if( ('nsnp20' in file ) and ('csnp3' in file) and ('max0.94'in file) ):
+    if( ('nsnp20' in file ) and ('csnp3' in file) and ('max0.45'in file) ):
         if 'iTrue' in file:
             evaluation_scores_true[train_parameter]={}
 
@@ -174,7 +175,7 @@ for file in filenames:
     train_parameter=splited_name[2]
 
     
-    if( ('nsnp20' in file ) and ('prevalence0.35.pkl' in file) and ('max0.94'in file) ):
+    if( ('nsnp20' in file ) and ('prevalence0.35.pkl' in file) and ('max0.45'in file) ):
         if 'iTrue' in file:
             evaluation_scores_true[train_parameter]={}
 
@@ -199,7 +200,7 @@ for file in filenames:
     splited_name=file.split('_')
     train_parameter=splited_name[0]
     
-    if(('prevalence0.35.pkl' in file) and ('csnp3' in file) and ('60' not in file) and ('80' not in file) and ('90' not in file) and ('nsnp20_max0.95' not in file)):
+    if('prevalence0.35.pkl' in file) and ('csnp3' in file) and ('0.3' not in file) and ('0.15' not in file) and ('0.5' not in file) and ('nsnp20_max0.45' not in file):
         if 'iTrue' in file:
             evaluation_scores_true[train_parameter]={}
 
@@ -212,8 +213,8 @@ for file in filenames:
 
         evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
 
-plot_comparisions(evaluation_scores_true,'nsnp','True')
-plot_comparisions(evaluation_scores_false,'nsnp','False')
+# plot_comparisions(evaluation_scores_true,'nsnp','True')
+# plot_comparisions(evaluation_scores_false,'nsnp','False')
 
 
 

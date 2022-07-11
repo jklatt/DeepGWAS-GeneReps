@@ -10,7 +10,7 @@ A_thaliana/chr_gen_pos_dictionary.pkl
 A_thaliana/*slurm*
 A_thaliana/*png*
 A_thaliana/*csv*
-
+A_thaliana/max_present_stat_bed_reader
 *csv*
 
 

@@ -11,6 +11,7 @@ import time
 import argparse
 from joblib import Parallel, delayed
 from numba import jit
+from bed_reader import open_bed
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--maf',default=0.1)
@@ -23,7 +24,17 @@ chr_ = load_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/chr_gen_pos
 (_, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bed").format(args.maf),verbose=False) 
 bim = pd.read_csv("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bim".format(args.maf), sep = '\t', header = None, names = ['chrom', 'name', '-', 'pos', '/', '.'])
 bed_mat=bed.compute()
+# file_name = "/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bed".format(args.maf)
+# bed = open_bed(file_name)
+# bed_mat = bed.read()
+
+
 print(bed_mat.shape)
+print((bed_mat[0,:].sum()/2)/len(bed_mat[0,:]))
+
+
+
+
 
 
 gene_persample = dict()

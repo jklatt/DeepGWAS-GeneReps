@@ -10,19 +10,28 @@ from utils import *
 import time
 import argparse
 from joblib import Parallel, delayed
+from bed_reader import open_bed
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--maf',required=True)
 parser.add_argument('--chr',type=int,required=True)
+# parser.add_argument('--maf',default=0.1)
+# parser.add_argument('--chr',type=int,default=1)
 args = parser.parse_args()
 
-# this function is to find the per gene per sample level statistics.
-chr_ = load_file('/home/zixshu/DeepGWAS/A_thaliana/chr_gen_pos_dictionary.pkl')
 
-(_, fam, bed) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_{}.bed").format(args.maf),verbose=False) 
-bim = pd.read_csv("/home/zixshu/DeepGWAS/A_thaliana/X_genic/X_genic_{}.bim".format(args.maf), sep = '\t', header = None, names = ['chrom', 'name', '-', 'pos', '/', '.'])
-bed_mat=bed.compute()
+file_name = "/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bed".format(args.maf)
+bed = open_bed(file_name)
+bed_mat = bed.read()
+
+
+# this function is to find the per gene per sample level statistics.
+chr_ = load_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/chr_gen_pos_dictionary.pkl')
+# (_, fam,_) = read_plink(join(get_data_folder(), "/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bed").format(args.maf),verbose=False) 
+# bed_mat=bed.compute()
+
+bim = pd.read_csv("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/X_genic/X_genic_{}.bim".format(args.maf), sep = '\t', header = None, names = ['chrom', 'name', '-', 'pos', '/', '.'])
 print(bed_mat.shape)
 
 
@@ -46,7 +55,7 @@ for gene in gene_list:
     snp_index = ((pos >= gene_limit[0][0]) & (pos <= gene_limit[0][1]) & (chromosome == num+1))
 
     if (snp_index.sum() > 0): # just keeping genes with SNPs mapped on them
-        gene_by_sample_times2=np.matmul(np.array(snp_index), bed_mat)
+        gene_by_sample_times2=np.matmul(bed_mat, np.array(snp_index))
         gene_by_sample=gene_by_sample_times2/2
         gene_by_sample_prop=gene_by_sample/snp_index.sum()
         gene_by_sample_prop_list.append(gene_by_sample_prop)
@@ -58,9 +67,14 @@ for gene in gene_list:
 # end = time.time()
 # print(end - start)      
 # overll_minor_persample_pergene=list(np.concatenate(overll_minor_persample_pergene))
-save_file('/home/zixshu/DeepGWAS/A_thaliana/max_present_stat/minor_present_percentage_{}MAF_chr{}.pkl'.format(args.maf, args.chr), gene_by_sample_prop_list)
-# save_file('/home/zixshu/DeepGWAS/A_thaliana/max_present_stat/minor_present_percentage_all_{}MAF.pkl'.format(args.maf), overll_minor_persample_pergene)
 
+#outputting the file
+save_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/max_present_stat_bed_reader/minor_present_percentage_{}MAF_chr{}.pkl'.format(args.maf, args.chr), gene_by_sample_prop_list)
+
+
+
+
+# save_file('/home/zixshu/DeepGWAS/A_thaliana/max_present_stat/minor_present_percentage_all_{}MAF.pkl'.format(args.maf), overll_minor_persample_pergene)
 # print(pd.DataFrame(overll_minor_persample_pergene.describe()))
 
 
