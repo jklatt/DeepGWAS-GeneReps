@@ -127,7 +127,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     num_genes_false=int((1-prevalence)*num_genes)
 
     # generate the casual snp position list
-    target_mutation_pos=random.sample(range(gene_length+1),num_casual_snp)
+    target_mutation_pos=random.sample(range(gene_length),num_casual_snp)
 
     data_list_true=[]
     label_list_true=[]
@@ -142,7 +142,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
         data=[[]]*gene_length
         
         if interaction:
-            num_snp_present=random.choices(range(len(target_mutation_pos),max_present+1),k=1)[0]
+            num_snp_present=random.choices(range(num_casual_snp,max_present+1),k=1)[0]
             present_list=gen_binary_list_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=all(bag_label_check)
@@ -194,7 +194,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
            bag_label=any(bag_label_check)
             
         for index in range(gene_length):
-            values = randint(0, 3)
+            values = randint(0, 4)
             item= [[index,values,present_list[index]]]
             data[index]=item
 

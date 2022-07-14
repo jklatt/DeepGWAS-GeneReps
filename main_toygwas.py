@@ -27,7 +27,7 @@ import pickle
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
 parser.add_argument('--epochs', type=int, default=50,)
-parser.add_argument('--lr', type=float, default=0.0005,
+parser.add_argument('--lr', type=float, default=0.005,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
@@ -40,14 +40,14 @@ parser.add_argument('--seed', type=int, default=1,
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
-parser.add_argument('-nsnp','--num_snp',type=int, default=11,help='number of SNP in every sample')
+parser.add_argument('-nsnp','--num_snp',type=int, default=100,help='number of SNP in every sample')
 parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
 parser.add_argument('-pre','--prevalence',type=float,default=0.1, help='the ratio of true bag and false bag in generated samples')
-parser.add_argument('-cprevalene','--control_prevalence',type=bool,default=True,   help='if we control prevalence when generating samples')
+parser.add_argument('-cprevalene','--control_prevalence',type=bool,default=True, help='if we control prevalence when generating samples')
 
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -396,14 +396,13 @@ def test(PATH):
     axis[1, 1].set_xlabel('Recall')
     axis[1, 1].set_ylabel('Precision')
 
-
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_version2'
+    SAVING_PATH=os.getcwd()+'/plots_bedreader'
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_version2'
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader'
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -422,13 +421,13 @@ def test(PATH):
 
 
 #early stopping criteria
-n_epochs_stop = 20
+n_epochs_stop = 25
 
 if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_version2'
+    PATH=working_dir+'/checkpoints_bedreader'
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -443,8 +442,8 @@ if __name__ == "__main__":
         train_loss=train(epoch,bag_class_weight_train,weight=True)
         val_loss=val()
 
-        os.makedirs("./tensorboard_logs_version2", exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_version2'+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader", exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader'+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
