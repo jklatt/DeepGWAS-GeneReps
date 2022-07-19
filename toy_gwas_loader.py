@@ -10,7 +10,7 @@ import random
 
 
 from utils import gen_binary_list_at_least_one_one, gen_binary_list_non_mutation_one, gen_binary_list_all_mutation_one, gen_binary_list_non_all_mutation_one
-
+from sklearn.model_selection import train_test_split
 
 gene_length=10
 target_mutation_pos=[3,5]
@@ -79,6 +79,8 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
         data_list.append(data)
         label_list.append(label)
         bag_label_list.append(bag_label)
+
+    
         
     
     train_data_list=data_list[:num_genes_train]
@@ -224,21 +226,27 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     data_list_out, label_list_out, bag_label_list_out=zip(*temp)
     data_list_out, label_list_out, bag_label_list_out=list(data_list_out), list(label_list_out), list(bag_label_list_out)
 
+    train_data_list, valtest_data, train_bag_label_list, valtest_baglabel, train_label_list,valtest_label=train_test_split(data_list_out,bag_label_list_out, 
+                                                                                                            label_list_out, test_size=1/3, random_state=1,stratify=bag_label_list_out)
 
 
-    # output the train and test set seperately
-    train_data_list=data_list_out[:num_genes_train]
-    test_data_list=data_list_out[num_genes_train:num_genes_train+num_genes_test]
-    val_data_list=data_list_out[num_genes_train+num_genes_test:]
+    
+    test_data_list, val_data_list, test_bag_label_list, val_bag_label_list, test_label_list, valid_label_list=train_test_split(valtest_data, valtest_baglabel, valtest_label, test_size=0.5, random_state=1, stratify= valtest_baglabel)                                                          
+
+
+    # # output the train and test set seperately
+    # train_data_list=data_list_out[:num_genes_train]
+    # test_data_list=data_list_out[num_genes_train:num_genes_train+num_genes_test]
+    # val_data_list=data_list_out[num_genes_train+num_genes_test:]
     
 
-    train_label_list= label_list_out[:num_genes_train]
-    test_label_list= label_list_out[num_genes_train:num_genes_train+num_genes_test]
-    valid_label_list=label_list_out[num_genes_train+num_genes_test:]
+    # train_label_list= label_list_out[:num_genes_train]
+    # test_label_list= label_list_out[num_genes_train:num_genes_train+num_genes_test]
+    # valid_label_list=label_list_out[num_genes_train+num_genes_test:]
 
-    train_bag_label_list= bag_label_list_out[:num_genes_train]
-    test_bag_label_list =bag_label_list_out[num_genes_train:num_genes_train+num_genes_test]
-    val_bag_label_list=bag_label_list_out[num_genes_train+num_genes_test:]
+    # train_bag_label_list= bag_label_list_out[:num_genes_train]
+    # test_bag_label_list =bag_label_list_out[num_genes_train:num_genes_train+num_genes_test]
+    # val_bag_label_list=bag_label_list_out[num_genes_train+num_genes_test:]
 
     return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list
 
@@ -248,11 +256,11 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 # num_casual_snp=4
 # num_genes_train=10
 # num_genes_test=8
-# prevalence=0.2
-# interaction=False
+# prevalence=0.35
+# interaction=True
 
 
-# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=True)
+# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=True)
 
 # print(train_data_list[0])
 # print(test_data_list[0])

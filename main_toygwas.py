@@ -22,12 +22,13 @@ import collections
 from utils import get_weight, save_file
 from torch.utils.tensorboard import SummaryWriter
 import pickle
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
-parser.add_argument('--epochs', type=int, default=50,)
-parser.add_argument('--lr', type=float, default=0.005,
+parser.add_argument('--epochs', type=int, default=60,)
+parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
@@ -399,10 +400,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader'
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_testlr/'+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader'
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_testlr/'+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -421,13 +422,13 @@ def test(PATH):
 
 
 #early stopping criteria
-n_epochs_stop = 25
+n_epochs_stop = 35
 
 if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader'
+    PATH=working_dir+'/checkpoints_bedreader_testlr/'+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -441,9 +442,11 @@ if __name__ == "__main__":
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
         val_loss=val()
+        scheduler = ReduceLROnPlateau(optimizer, 'min')
+        scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader", exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader'+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_testlr/"+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_testlr/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

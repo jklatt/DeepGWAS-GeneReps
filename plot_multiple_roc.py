@@ -101,15 +101,16 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction, nu
     axis[1, 1].legend(loc = 'upper right')
     axis[1, 1].set_xlim([0, 1])
     axis[1, 1].set_ylim([0, 1])
+    axis[1, 1].axhline(y=0.35, color='grey', linestyle='dotted')
 
 
     plt.tight_layout()
-    os.makedirs('/home/zixshu/DeepGWAS/plots_bedreader_evaluation', exist_ok=True)
-    plt.savefig('/home/zixshu/DeepGWAS/plots_bedreader_evaluation/numsnp{}_var_{}_interaction{}.png'.format(num_snp, variating_variable, interaction))
+    os.makedirs('/home/zixshu/DeepGWAS/plots_bedreader_evaluation_value3', exist_ok=True)
+    plt.savefig('/home/zixshu/DeepGWAS/plots_bedreader_evaluation_value3/numsnp{}_var_{}_interaction{}.png'.format(num_snp, variating_variable, interaction))
 
 
-PATH='/home/zixshu/DeepGWAS/metrics_bedreader'
-filenames=os.listdir('/home/zixshu/DeepGWAS/metrics_bedreader')
+PATH='/home/zixshu/DeepGWAS/metrics_bedreader_value3'
+filenames=os.listdir('/home/zixshu/DeepGWAS/metrics_bedreader_value3')
 
 #######################################################################################
 # this is the plot for experiment for num_snp=20
@@ -308,8 +309,8 @@ for file in filenames:
 
         evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
 
-plot_comparisions(evaluation_scores_true,'max_present','True', "2000")
-plot_comparisions(evaluation_scores_false,'max_present','False', "2000")
+# plot_comparisions(evaluation_scores_true,'max_present','True', "2000")
+# plot_comparisions(evaluation_scores_false,'max_present','False', "2000")
 
 
 
@@ -333,7 +334,7 @@ for file in filenames:
 
         evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
 
-plot_comparisions(evaluation_scores_true,'prevalence','True',"2000")
+# plot_comparisions(evaluation_scores_true,'prevalence','True',"2000")
 plot_comparisions(evaluation_scores_false,'prevalence','False',"2000")
 
 
@@ -360,7 +361,7 @@ for file in filenames:
 
         evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
 
-plot_comparisions(evaluation_scores_true,'csnp','True',"2000")
+# plot_comparisions(evaluation_scores_true,'csnp','True',"2000")
 plot_comparisions(evaluation_scores_false,'csnp','False',"2000")
 
 

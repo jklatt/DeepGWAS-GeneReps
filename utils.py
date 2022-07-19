@@ -24,14 +24,22 @@ def gen_binary_list_non_all_mutation_one(gene_length: int, mutation_positions: L
 
     # check mutation constraint
     multation_label=[random_list[mutation_position] for mutation_position in mutation_positions]
-        
 
     # if all the one -- flip random number of indices
     if all(v==1 for v in multation_label):
+        #flipping for creating false bags
         num_flip=np.random.choice(range(1, len(mutation_positions)+1),1)
         flip_pos=random.sample(mutation_positions,int(num_flip))
+
+        #also unflipping the corresponding number of SNPs
+        zero_ind=[k for k, x in enumerate(random_list) if x == 0]
+        unflip_pos=random.sample(zero_ind, int(num_flip))
+
         for i in flip_pos:
             random_list[i]=0
+
+        for j in unflip_pos:
+            random_list[j]=1
 
     return random_list
 
@@ -51,10 +59,19 @@ def gen_binary_list_at_least_one_one(gene_length: int, mutation_positions: List[
 
     # if all of the casual mutation is false--- flip it to true
     if all(v==0 for v in mutation_label):
+        #flipping for the true bags
         num_flip=np.random.choice(range(1, len(mutation_positions)+1),1)
         flip_pos=random.sample(mutation_positions,int(num_flip))
+
+        #unflipping the corresponding number
+        one_ind=[k for k, x in enumerate(random_list) if x == 1]
+        unflip_pos=random.sample(one_ind, int(num_flip))
+
         for i in flip_pos:
             random_list[i]=1
+
+        for j in unflip_pos:
+            random_list[j]=0
 
     return random_list
 
