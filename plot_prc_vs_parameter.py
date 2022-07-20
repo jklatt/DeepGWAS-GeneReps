@@ -5,7 +5,7 @@ import numpy as np
 
     
 
-def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic):
+def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter):
     # extracting max_present dictionary
     evaluation_scores_true={}
     evaluation_scores_false={}
@@ -34,7 +34,6 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic):
                         evaluation_scores_false[train_parameter]['prc_avg']=[]
 
 
-
                 FILE_PATH=PATH+'/'+file
                 with open(FILE_PATH, "rb") as f:
                     evaluation_dict=pickle.load(f)
@@ -52,31 +51,10 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic):
     evaluation_scores_true_avg = get_avg_dic(evaluation_scores_true)
     evaluation_scores_false_avg = get_avg_dic(evaluation_scores_false)
 
-
-    if 'snp' in list(evaluation_scores_true_avg.keys())[0]:
-            split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('p')]
-        
-    else:
-        split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('0')-1]
-
-    parameters=sorted(list(evaluation_scores_true_avg.keys()), key=lambda x: float(x.split(split_element)[-1]))
-
-    values_arr=[]
-    sd_arr=[]
-    for parameter in parameters:
-        values_arr.append(evaluation_scores_true_avg[parameter]['roc_auc_mean'])
-        sd_arr.append(evaluation_scores_true_avg[parameter]['roc_auc_sd'])
+    return evaluation_scores_true_avg, evaluation_scores_false_avg 
 
 
-    x = np.array(range(len(parameters)))
-
-    plt.xticks(x, parameters)
-    plt.plot(x, values_arr, color="yellow")
-    plt.errorbar(x, values_arr, yerr=sd_arr)
-    plt.xlim([0,1])
-    plt.ylim([0,1])
-
-    plt.savefig("/home/zixshu/DeepGWAS/plots_bedreader_testlr/{}_{}_{}.png".format(criteria1,criteria2,criteria3))
+    
 
 
 
@@ -96,10 +74,57 @@ def get_avg_dic(evaluation_scores_true):
 
 
 
+
+def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evaluation_scores_true_avg, interaction):
+
+    if 'snp' in list(evaluation_scores_true_avg.keys())[0]:
+                split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('p')]
+        
+    else:
+        split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('0')-1]
+
+    parameters=sorted(list(evaluation_scores_true_avg.keys()), key=lambda x: float(x.split(split_element)[-1]))
+
+    values_arr=[]
+    sd_arr=[]
+    for parameter in parameters:
+        values_arr.append(evaluation_scores_true_avg[parameter]['roc_auc_mean'])
+        sd_arr.append(evaluation_scores_true_avg[parameter]['roc_auc_sd'])
+
+    x = np.array(range(len(parameters)))
+
+    #remove the pkl ending for the string
+    if "pkl" in criteria3:
+            criteria3=criteria3[0:14]
+
+    #ploting the parameter vs score plot
+    plt.figure()
+    plt.xticks(x, parameters)
+    plt.plot(x, values_arr, "-^",color="blue")
+    plt.errorbar(x, values_arr, yerr=sd_arr,elinewidth=5)
+    plt.xlim([0,max(x)])
+    plt.ylim([0,1.1])
+
+    if interaction=="True":
+        plt.title("{}_{}_{}_variating{}_iTrue".format(criteria1,criteria2,criteria3, variating_parameter))
+        plt.savefig("/home/zixshu/DeepGWAS/plots_bedreader_testlr/{}_{}_{}_variating{}_iTrue.png".format(criteria1,criteria2,criteria3, variating_parameter))
+
+    else:
+        plt.title("{}_{}_{}_variating{}_iFalse".format(criteria1,criteria2,criteria3, variating_parameter))
+        plt.savefig("/home/zixshu/DeepGWAS/plots_bedreader_testlr/{}_{}_{}_variating{}_iFalse.png".format(criteria1,criteria2,criteria3, variating_parameter))
+
+
+
 seeds=list(range(1,6))
 criteria1="nsnp20"
 criteria2="csnp3"
 criteria3="prevalence0.35.pkl"
-read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic)
-# evaluation_scores_true,evaluation_scores_false=read_result_byseed(seeds, criteria1, criteria2, criteria3)
+variating_parameter="max_present"
+evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter)
+
+ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter,evaluation_scores_true_avg,"True")
+ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter,evaluation_scores_false_avg, "False")
+
+
+
 

@@ -1,3 +1,4 @@
+from more_itertools import one
 import numpy as np
 import random
 from typing import List
@@ -33,10 +34,14 @@ def gen_binary_list_non_all_mutation_one(gene_length: int, mutation_positions: L
 
         #also unflipping the corresponding number of SNPs
         zero_ind=[k for k, x in enumerate(random_list) if x == 0]
-        unflip_pos=random.sample(zero_ind, int(num_flip))
+        if len(zero_ind)>int(num_flip):
+            unflip_pos=random.sample(zero_ind, int(num_flip))
+        else:
+            unflip_pos=zero_ind
 
         for i in flip_pos:
             random_list[i]=0
+
 
         for j in unflip_pos:
             random_list[j]=1
@@ -65,7 +70,11 @@ def gen_binary_list_at_least_one_one(gene_length: int, mutation_positions: List[
 
         #unflipping the corresponding number
         one_ind=[k for k, x in enumerate(random_list) if x == 1]
-        unflip_pos=random.sample(one_ind, int(num_flip))
+        if len(one_ind)>int(num_flip):
+            unflip_pos=random.sample(one_ind, int(num_flip))
+        else:
+            unflip_pos=one_ind
+
 
         for i in flip_pos:
             random_list[i]=1
