@@ -14,10 +14,12 @@ class Attention(nn.Module):
         self.feature_extractor_part1 = nn.Sequential(
             # nn.Conv2d(20, 50, kernel_size=1),
             nn.Linear(3, 10),# note: change to mlp now for the encoding part
-            nn.ReLU(),
+            # nn.ReLU(),
+            nn.LeakyReLU(),#here changed to leakeyReLU
             nn.MaxPool1d(2, stride=2),
             nn.Linear(5, 20),
-            nn.ReLU(),
+            # nn.ReLU(),
+            nn.LeakyReLU(),#here changed to leakeyReLU
             nn.MaxPool1d(2, stride=2)# note: changed to gru?
 
             # conv1d trial
@@ -32,7 +34,8 @@ class Attention(nn.Module):
         self.feature_extractor_part2 = nn.Sequential(
             # nn.Linear(30, self.L),
             nn.Linear(10, self.L),
-            nn.ReLU(),
+            # nn.ReLU(),
+            nn.LeakyReLU(),#here changed to leakeyReLU
         )
 
         self.attention = nn.Sequential(

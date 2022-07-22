@@ -5,19 +5,32 @@ import numpy as np
 
     
 
-def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter):
+def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter, path):
     # extracting max_present dictionary
     evaluation_scores_true={}
     evaluation_scores_false={}
 
     for seed in seeds:
-        PATH="/home/zixshu/DeepGWAS/metrics_bedreader_testlr/"+str(seed)
+        PATH=path+str(seed)
         filenames=os.listdir(PATH)
 
     #variating max_present
         for file in filenames:
-            splited_name=file.split('_')
-            train_parameter=splited_name[1]
+            
+            if variating_parameter=="prevalence":
+                splited_name=file.split('_')
+                train_parameter=splited_name[4].split('.p')[0]
+
+            if variating_parameter=="csnp":
+                splited_name=file.split('_')
+                train_parameter=splited_name[2]
+               
+            if variating_parameter=="max_present":
+                splited_name=file.split('_')
+                train_parameter=splited_name[1]
+
+
+
         
             if((criteria1 in file ) and (criteria2 in file) and (criteria3 in file)):
                 if seed==1:
@@ -75,7 +88,7 @@ def get_avg_dic(evaluation_scores_true):
 
 
 
-def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evaluation_scores_true_avg, interaction):
+def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evaluation_scores_true_avg, interaction, path):
 
     if 'snp' in list(evaluation_scores_true_avg.keys())[0]:
                 split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('p')]
@@ -85,11 +98,17 @@ def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evalu
 
     parameters=sorted(list(evaluation_scores_true_avg.keys()), key=lambda x: float(x.split(split_element)[-1]))
 
-    values_arr=[]
-    sd_arr=[]
+    values_arr_roc=[]
+    sd_arr_roc=[]
+    values_arr_prc=[]
+    sd_arr_prc=[]
     for parameter in parameters:
-        values_arr.append(evaluation_scores_true_avg[parameter]['roc_auc_mean'])
-        sd_arr.append(evaluation_scores_true_avg[parameter]['roc_auc_sd'])
+        values_arr_roc.append(evaluation_scores_true_avg[parameter]['roc_auc_mean'])
+        sd_arr_roc.append(evaluation_scores_true_avg[parameter]['roc_auc_sd'])
+        values_arr_prc.append(evaluation_scores_true_avg[parameter]['prc_auc_mean'])
+        sd_arr_prc.append(evaluation_scores_true_avg[parameter]['prc_auc_sd'])
+
+
 
     x = np.array(range(len(parameters)))
 
@@ -98,32 +117,65 @@ def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evalu
             criteria3=criteria3[0:14]
 
     #ploting the parameter vs score plot
-    plt.figure()
-    plt.xticks(x, parameters)
-    plt.plot(x, values_arr, "-^",color="blue")
-    plt.errorbar(x, values_arr, yerr=sd_arr,elinewidth=5)
-    plt.xlim([0,max(x)])
-    plt.ylim([0,1.1])
+    figure, axis = plt.subplots(1, 2, figsize=(7, 7))
+    axis[0].set_xticks(x, parameters)
+    axis[0].plot(x, values_arr_roc, "-^",color="blue")
+    axis[0].errorbar(x, values_arr_roc, yerr=sd_arr_roc,elinewidth=5)
+    axis[0].set_xlim([0,max(x)])
+    axis[0].set_ylim([0,1])
+    axis[0].set_ylabel("AUROC")
+
+    axis[1].set_xticks(x, parameters)
+    axis[1].plot(x, values_arr_prc, "-^",color="orange")
+    axis[1].errorbar(x, values_arr_prc, yerr=sd_arr_prc,elinewidth=5)
+    axis[1].set_xlim([0,max(x)])
+    axis[1].set_ylim([0,1])
+    axis[1].set_ylabel("AUPRC")
+
+
+
+
 
     if interaction=="True":
-        plt.title("{}_{}_{}_variating{}_iTrue".format(criteria1,criteria2,criteria3, variating_parameter))
-        plt.savefig("/home/zixshu/DeepGWAS/plots_bedreader_testlr/{}_{}_{}_variating{}_iTrue.png".format(criteria1,criteria2,criteria3, variating_parameter))
+        figure.suptitle("{}_{}_{}_variating{}_iTrue".format(criteria1,criteria2,criteria3, variating_parameter))
+        plt.tight_layout()
+        plt.savefig(path+"{}_{}_{}_variating{}_iTrue.png".format(criteria1,criteria2,criteria3, variating_parameter))
 
     else:
-        plt.title("{}_{}_{}_variating{}_iFalse".format(criteria1,criteria2,criteria3, variating_parameter))
-        plt.savefig("/home/zixshu/DeepGWAS/plots_bedreader_testlr/{}_{}_{}_variating{}_iFalse.png".format(criteria1,criteria2,criteria3, variating_parameter))
+        figure.suptitle("{}_{}_{}_variating{}_iFalse".format(criteria1,criteria2,criteria3, variating_parameter))
+        plt.tight_layout()
+        plt.savefig(path+"{}_{}_{}_variating{}_iFalse.png".format(criteria1,criteria2,criteria3, variating_parameter))
 
 
 
 seeds=list(range(1,6))
-criteria1="nsnp20"
-criteria2="csnp3"
-criteria3="prevalence0.35.pkl"
-variating_parameter="max_present"
-evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter)
+#max_present
+# criteria1="nsnp20"
+# criteria2="csnp3"
+# criteria3="prevalence0.35.pkl"
+# variating_parameter="max_present"
 
-ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter,evaluation_scores_true_avg,"True")
-ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter,evaluation_scores_false_avg, "False")
+#num_csnp
+criteria1="nsnp20"
+criteria2="max1.0"
+criteria3="prevalence0.35.pkl"
+variating_parameter="csnp"
+
+#prevalence
+# criteria1="nsnp20"
+# criteria2="csnp3"
+# criteria3="max1.0"
+# variating_parameter="prevalence"
+
+
+
+path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu/"
+saving_path="/home/zixshu/DeepGWAS/plot_prc_vs_parameter_leakyrelu/"
+os.makedirs(saving_path,exist_ok=True)
+evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter,path)
+
+ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter,evaluation_scores_true_avg,"True",saving_path)
+ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter,evaluation_scores_false_avg, "False",saving_path)
 
 
 
