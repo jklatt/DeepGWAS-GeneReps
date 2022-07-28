@@ -33,18 +33,18 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, vari
 
         
             if((criteria1 in file ) and (criteria2 in file) and (criteria3 in file)):
-                if seed==1:
-                    if 'iTrue' in file:
-                        evaluation_scores_true[train_parameter]={}
-                        evaluation_scores_true[train_parameter]['roc_auc']=[]
-                        evaluation_scores_true[train_parameter]['prc_avg']=[]
+                
+                if ('iTrue' in file) and train_parameter not in list(evaluation_scores_true.keys()) :
+                    evaluation_scores_true[train_parameter]={}
+                    evaluation_scores_true[train_parameter]['roc_auc']=[]
+                    evaluation_scores_true[train_parameter]['prc_avg']=[]
 
 
 
-                    else:
-                        evaluation_scores_false[train_parameter]={}
-                        evaluation_scores_false[train_parameter]['roc_auc']=[]
-                        evaluation_scores_false[train_parameter]['prc_avg']=[]
+                elif ("iFalse" in file) and train_parameter not in list(evaluation_scores_false.keys()):
+                    evaluation_scores_false[train_parameter]={}
+                    evaluation_scores_false[train_parameter]['roc_auc']=[]
+                    evaluation_scores_false[train_parameter]['prc_avg']=[]
 
 
                 FILE_PATH=PATH+'/'+file
@@ -149,19 +149,20 @@ def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evalu
 
 
 seeds=list(range(1,6))
-#max_present
+
+#max_present snp=20
 # criteria1="nsnp20"
 # criteria2="csnp3"
 # criteria3="prevalence0.35.pkl"
 # variating_parameter="max_present"
 
-#num_csnp
-criteria1="nsnp20"
-criteria2="max1.0"
-criteria3="prevalence0.35.pkl"
-variating_parameter="csnp"
+# #num_csnp snp=20
+# criteria1="nsnp20"
+# criteria2="max1.0"
+# criteria3="prevalence0.35.pkl"
+# variating_parameter="csnp"
 
-#prevalence
+#prevalence snp=20
 # criteria1="nsnp20"
 # criteria2="csnp3"
 # criteria3="max1.0"
@@ -169,8 +170,28 @@ variating_parameter="csnp"
 
 
 
-path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu/"
-saving_path="/home/zixshu/DeepGWAS/plot_prc_vs_parameter_leakyrelu/"
+#max_present snp=200
+criteria1="nsnp200"
+criteria2="csnp3"
+criteria3="prevalence0.35.pkl"
+variating_parameter="max_present"
+
+# #num_csnp snp=200
+# criteria1="nsnp200"
+# criteria2="max0.8"
+# criteria3="prevalence0.35.pkl"
+# variating_parameter="csnp"
+
+#prevalence snp=200
+# criteria1="nsnp200"
+# criteria2="csnp3"
+# criteria3="max0.8"
+# variating_parameter="prevalence"
+
+
+
+path="/home/zixshu/DeepGWAS/metrics_bedreader_relu_lr0.0001/"
+saving_path="/home/zixshu/DeepGWAS/plot_prc_vs_parameter_relu_lr0.0001/"
 os.makedirs(saving_path,exist_ok=True)
 evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter,path)
 

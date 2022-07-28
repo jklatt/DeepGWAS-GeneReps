@@ -77,6 +77,7 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction, nu
     axis[0, 1].legend(loc = 'lower left')
     axis[0, 1].set_xlim([0, 1])
     axis[0, 1].set_ylim([0, 1])
+    axis[0, 1].axhline(y=0.35, color='grey', linestyle='dotted')
 
 
 ## instance level roc
@@ -105,12 +106,14 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction, nu
 
 
     plt.tight_layout()
-    os.makedirs('/home/zixshu/DeepGWAS/plots_bedreader_evaluation_value3', exist_ok=True)
-    plt.savefig('/home/zixshu/DeepGWAS/plots_bedreader_evaluation_value3/numsnp{}_var_{}_interaction{}.png'.format(num_snp, variating_variable, interaction))
+    os.makedirs('/home/zixshu/DeepGWAS/plots_bedreader_relu_lr0.0005/1', exist_ok=True)
+    plt.savefig('/home/zixshu/DeepGWAS/plots_bedreader_relu_lr0.0005/1/numsnp{}_var_{}_interaction{}.png'.format(num_snp, variating_variable, interaction))
+    # os.makedirs('/home/zixshu/DeepGWAS/plots_leakyrelu/1', exist_ok=True)
+    # plt.savefig('/home/zixshu/DeepGWAS/plots_leakyrelu/1/numsnp{}_var_{}_interaction{}.png'.format(num_snp, variating_variable, interaction))
 
 
-PATH='/home/zixshu/DeepGWAS/metrics_bedreader_value3'
-filenames=os.listdir('/home/zixshu/DeepGWAS/metrics_bedreader_value3')
+PATH='/home/zixshu/DeepGWAS/metrics_bedreader_relu_lr0.0005/1'
+filenames=os.listdir('/home/zixshu/DeepGWAS/metrics_bedreader_relu_lr0.0005/1')
 
 #######################################################################################
 # this is the plot for experiment for num_snp=20
@@ -224,8 +227,8 @@ for file in filenames:
 
         evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
 
-plot_comparisions(evaluation_scores_true,'max_present','True', "200")
-plot_comparisions(evaluation_scores_false,'max_present','False', "200")
+# plot_comparisions(evaluation_scores_true,'max_present','True', "200")
+# plot_comparisions(evaluation_scores_false,'max_present','False', "200")
 
 
 
@@ -266,7 +269,7 @@ for file in filenames:
     if( ('nsnp200' in file ) and ('prevalence0.35.pkl' in file) and ('max0.8'in file) ):
         if 'iTrue' in file:
             evaluation_scores_true[train_parameter]={}
-
+ 
         else:
             evaluation_scores_false[train_parameter]={}
 
@@ -335,7 +338,7 @@ for file in filenames:
         evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
 
 # plot_comparisions(evaluation_scores_true,'prevalence','True',"2000")
-plot_comparisions(evaluation_scores_false,'prevalence','False',"2000")
+# plot_comparisions(evaluation_scores_false,'prevalence','False',"2000")
 
 
 
@@ -362,7 +365,7 @@ for file in filenames:
         evaluation_scores_true, evaluation_scores_false=extract_dicts(train_parameter, file , evaluation_dict, evaluation_scores_true, evaluation_scores_false)
 
 # plot_comparisions(evaluation_scores_true,'csnp','True',"2000")
-plot_comparisions(evaluation_scores_false,'csnp','False',"2000")
+# plot_comparisions(evaluation_scores_false,'csnp','False',"2000")
 
 
 

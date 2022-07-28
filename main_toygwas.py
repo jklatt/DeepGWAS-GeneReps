@@ -28,7 +28,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
 parser.add_argument('--epochs', type=int, default=500,)
-parser.add_argument('--lr', type=float, default=0.000075,
+parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
@@ -75,20 +75,22 @@ else:
 if args.control_prevalence:
     # prevalence as parameter sample generation
     data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test,val_data_list,val_label_list, val_bag_label_list=generate_samples_prev(gene_length=args.num_snp, 
-    max_present=int(args.max_present*args.num_snp) ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction)
+    max_present=int(args.max_present*args.num_snp) ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction,seed=args.seed)
 
 else:
     # without controling prevalence sample generation
     data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test,val_data_list,val_bag_label_list,val_label_list=generate_samples(gene_length=args.num_snp,
-    max_present=int(args.max_present*args.num_snp),num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction)
+    max_present=int(args.max_present*args.num_snp),num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction,seed=args.seed)
 
 
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
+bag_class_weight_val=get_weight(val_bag_label_list)
 if args.cuda:
     bag_class_weight_train=np.array(bag_class_weight_train)
     bag_class_weight_train=torch.from_numpy(bag_class_weight_train)
+    bag_class_weight_val=get_weight(val_bag_label_list)
     bag_class_weight_train.cuda()
     # print("weight is on cuda", bag_class_weight_train.get_device())
 
@@ -138,7 +140,8 @@ validation_loader =DataLoader(validation_data,batch_size=1, shuffle=False)
 
 
 sharedParams = {'weight_train': bag_class_weight_train,
-'weight_test': bag_class_weight_test}
+'weight_test': bag_class_weight_test,
+'weight_val':bag_class_weight_val}
 
 
 print('Init Model')
@@ -209,9 +212,21 @@ def val():
 
         if args.cuda:
             data, bag_label = data.cuda(), bag_label.cuda()
+
+
         data, bag_label = Variable(data), Variable(bag_label)
         loss, attention_weights = model.calculate_objective(data, bag_label)
+        # if args.weight_loss:
+        #     if bag_label:
+        #         weighted_loss=bag_class_weight_val[0]*loss
+        #     else:
+        #         weighted_loss=bag_class_weight_val[1]*loss
+        #     val_loss += weighted_loss.data[0]
+
+        # else:
+        #     val_loss += loss.data[0]
         val_loss += loss.data[0]
+
         error, predicted_label = model.calculate_classification_error(data, bag_label)
         val_error += error
 
@@ -379,6 +394,7 @@ def test(PATH):
     axis[0, 1].set_ylim([0, 1])
     axis[0, 1].set_xlabel('Recall')
     axis[0, 1].set_ylabel('Precision')
+    axis[0, 1].axhline(y=0.35, color='grey', linestyle='dotted')
 
     axis[1, 0].set_title('Instance level ROC')
     axis[1, 0].plot(fpr_instance, tpr_instance, 'b', label = 'AUC = %0.2f' % roc_auc_instance)
@@ -400,10 +416,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu/'+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu/'+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -422,13 +438,13 @@ def test(PATH):
 
 
 #early stopping criteria
-n_epochs_stop = 0.2* args.epochs
-
+n_epochs_stop = 35
+patience=10
 if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu/'+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -442,38 +458,41 @@ if __name__ == "__main__":
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
         val_loss=val()
-        scheduler = ReduceLROnPlateau(optimizer, 'min',patience= args.epochs*0.1, min_lr=0.000001)
+        scheduler = ReduceLROnPlateau(optimizer, 'min',patience=10, min_lr=0.000001,factor=0.25,cooldown=5)
         scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu/"+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0005/"+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
         writer.add_scalar('validation loss',
                             val_loss/ epoch, epoch)
   
+        if epoch>patience:
+            # for saving best model and check early stoping criteria
+            if val_loss< min_loss:
+                min_loss=val_loss
+                epoch_min=epoch
+                epochs_no_improve = 0
 
-        # for saving best model and check early stoping criteria
-        if val_loss< min_loss:
-            min_loss=val_loss
-            epoch_min=epoch
-            epochs_no_improve = 0
+                model_state=model.state_dict()
+                optimizer_state=optimizer.state_dict()
 
-        else:
-            epochs_no_improve += 1
+            else:
+                epochs_no_improve += 1
 
-        if epoch > 5 and epochs_no_improve == n_epochs_stop:
-            print('Early stopping!' )
-            early_stop = True
-            break
-        else:
-            continue
-        
+            if epoch > 5 and epochs_no_improve == n_epochs_stop:
+                print('Early stopping!' )
+                early_stop = True
+                break
+            else:
+                continue
 
+            
 
     #save checkpoint of the model
-    torch.save({'epoch':epoch_min, 'model_state_dict': model.state_dict(),'optimizer_state_dict': optimizer.state_dict(),'loss':min_loss}, PATH_SAVE)
+    torch.save({'epoch':epoch_min, 'model_state_dict': model_state,'optimizer_state_dict': optimizer_state,'loss':min_loss}, PATH_SAVE)
 
     print('Start Testing')
     print('training weight:', bag_class_weight_test)

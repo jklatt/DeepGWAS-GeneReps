@@ -5,7 +5,6 @@ from typing import List
 import pickle
 
 def get_weight(bag_label_list):
-    random.seed(1)
 
     true_prob=np.array(bag_label_list).sum()/len(bag_label_list)
     false_prob=1-true_prob
@@ -14,7 +13,6 @@ def get_weight(bag_label_list):
     return bag_class_weight
 
 def gen_binary_list_non_all_mutation_one(gene_length: int, mutation_positions: List[int], num_snp_present:int) -> List[int]:
-    random.seed(1)
 
     # generate random list bases on the max limit
     present_pos=random.sample(range(gene_length),num_snp_present)
@@ -42,7 +40,6 @@ def gen_binary_list_non_all_mutation_one(gene_length: int, mutation_positions: L
         for i in flip_pos:
             random_list[i]=0
 
-
         for j in unflip_pos:
             random_list[j]=1
 
@@ -50,7 +47,6 @@ def gen_binary_list_non_all_mutation_one(gene_length: int, mutation_positions: L
 
 
 def gen_binary_list_at_least_one_one(gene_length: int, mutation_positions: List[int], num_snp_present:int) -> List[int]:
-    random.seed(1)
 
     # generate random list bases on the max limit
     present_pos=random.sample(range(gene_length),num_snp_present)
@@ -85,7 +81,6 @@ def gen_binary_list_at_least_one_one(gene_length: int, mutation_positions: List[
     return random_list
 
 def gen_binary_list_all_mutation_one(gene_length: int, mutation_positions: List[int],num_snp_present:int) -> List[int]:
-    random.seed(1)
     
     all_position=list(range(gene_length))
     present_list=np.zeros(gene_length)   
@@ -104,8 +99,7 @@ def gen_binary_list_all_mutation_one(gene_length: int, mutation_positions: List[
 
 
 def gen_binary_list_non_mutation_one(gene_length: int, mutation_positions: List[int],num_snp_present:int) -> List[int]:
-    random.seed(1)
-    
+
     all_position=list(range(gene_length))
     present_list=np.zeros(gene_length)  
 

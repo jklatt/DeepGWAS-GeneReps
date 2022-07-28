@@ -19,7 +19,7 @@ num_genes=200
 train=True
 num_in_train=2
 
-def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, interaction=False):
+def generate_samples(gene_lenggen_binary_list_non_mutation_oneth, max_present,num_casual_snp, num_genes_train,num_genes_test, interaction=False):
     # generate some toy sample of GWAS data with integers
     # gene_length=np.int(np.random.normal(gene_length_mean,gene_length_var,1))
     random.seed(1)
@@ -118,10 +118,10 @@ def generate_samples(gene_length, max_present,num_casual_snp, num_genes_train,nu
 
 
 
-def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False):
+def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False, seed=1):
     #this function generate the true and false sample seperately to achieve the predefined prevalence
-    random.seed(1)
-    np.random.seed(4)
+    random.seed(seed)
+    np.random.seed(seed)
 
     # define the total number of genes and calculate the number of true and false gene
     num_genes=num_genes_train+num_genes_test+num_genes_test
@@ -169,8 +169,6 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
             else:
                label=False    
             single_labels.append(label)
-        
-        
 
         data_list_true.append(data)
         label_list_true.append(single_labels)
@@ -183,17 +181,27 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     for j in range(0, num_genes_false):
         single_labels=[]
         data=[[]]*gene_length
-        num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
+        
         
         if interaction:
-           present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
-           bag_label_check=[present_list[i] for i in target_mutation_pos]
-           bag_label=all(bag_label_check)
+            num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
+            present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+            bag_label_check=[present_list[i] for i in target_mutation_pos]
+            bag_label=all(bag_label_check)
+
+           
 
         else:
-           present_list=gen_binary_list_non_mutation_one(gene_length,target_mutation_pos, num_snp_present)
-           bag_label_check=[present_list[i] for i in target_mutation_pos]
-           bag_label=any(bag_label_check)
+            if (max_present+len(target_mutation_pos))>gene_length:
+                num_snp_present=random.choices(range(1,gene_length+1-len(target_mutation_pos)),k=1)[0]
+            else:
+                num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
+            present_list=gen_binary_list_non_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+            bag_label_check=[present_list[i] for i in target_mutation_pos]
+            bag_label=any(bag_label_check)
+
+
+           
             
         for index in range(gene_length):
             values = randint(0, 4)
