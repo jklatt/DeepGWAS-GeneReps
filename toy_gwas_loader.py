@@ -7,7 +7,7 @@ from torchvision import datasets, transforms
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import random
-
+import pandas as pd
 
 from utils import gen_binary_list_at_least_one_one, gen_binary_list_non_mutation_one, gen_binary_list_all_mutation_one, gen_binary_list_non_all_mutation_one
 from sklearn.model_selection import train_test_split
@@ -129,7 +129,8 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     num_genes_false=int((1-prevalence)*num_genes)
 
     # generate the casual snp position list
-    target_mutation_pos=random.sample(range(gene_length),num_casual_snp)
+    target_mutation_pos=random.sample(range(gene_length+1),num_casual_snp)
+    print("--The target mutation position is", sorted(target_mutation_pos))
 
     data_list_true=[]
     label_list_true=[]
@@ -137,6 +138,12 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     data_list_false=[]
     label_list_false=[]
     bag_label_list_false=[]
+    causal_ind_list_true=[]
+    causal_ind_list_false=[]
+    casualsnp_freq_list_true=[]
+    casualsnp_freq_list_false=[]
+    actual_present_true=[]
+    actual_present_false=[]
 
     # generate true samples
     for i in range(0, num_genes_true):
@@ -146,15 +153,25 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
         if interaction:
             num_snp_present=random.choices(range(num_casual_snp,max_present+1),k=1)[0]
             present_list=gen_binary_list_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+
+            actual_present=present_list.count(1)
+
+
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=all(bag_label_check)
+            casualsnp_freq_true=bag_label_check.count(1)
             
 
         else:
             num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
             present_list=gen_binary_list_at_least_one_one(gene_length,target_mutation_pos, num_snp_present)
+            actual_present=present_list.count(1)
+
+
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=any(bag_label_check)
+            casualsnp_freq_true=bag_label_check.count(1)
+
 
             
         for index in range(gene_length):
@@ -170,24 +187,39 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
                label=False    
             single_labels.append(label)
 
+
+        causal_ind=[l for l, x in enumerate(single_labels) if x]
+        causal_ind_list_true.append(causal_ind)
+        casualsnp_freq_list_true.append(casualsnp_freq_true)
+        actual_present_true.append(actual_present)
+
+
+
         data_list_true.append(data)
         label_list_true.append(single_labels)
         bag_label_list_true.append(bag_label)
-        if not all(bag_label_list_true):
-            print("there is something wrong with true bag")
-        
+
+    if not all(bag_label_list_true):
+        print("!!!!!!!there is something wrong with true bag!!!!!!")
+
+    print("-----------------------------------------------------------------------------")
+    print("-----Table of casual SNP present stats true bag-------", pd.DataFrame(np.concatenate(causal_ind_list_true),columns =['causal_ind']).groupby(['causal_ind']).size())
+    print("-----Frequency of casual SNP in True bag-----",pd.DataFrame(casualsnp_freq_list_true).describe())    
+    print("-----Actual number of SNP present True bag----", pd.DataFrame(np.array(actual_present_true)/gene_length).describe())
 
     # generate false samples
     for j in range(0, num_genes_false):
         single_labels=[]
         data=[[]]*gene_length
         
-        
         if interaction:
             num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
             present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+            actual_present=present_list.count(1)
+
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=all(bag_label_check)
+            casualsnp_freq_false=bag_label_check.count(1)
 
            
 
@@ -197,8 +229,11 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
             else:
                 num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
             present_list=gen_binary_list_non_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+            actual_present=present_list.count(1)
+
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=any(bag_label_check)
+            casualsnp_freq_false=bag_label_check.count(1)
 
 
            
@@ -215,13 +250,26 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
                label=False         
             single_labels.append(label)
 
-        
+
+        causal_ind=[l for l, x in enumerate(single_labels) if x]
+        causal_ind_list_false.append(causal_ind)
+        casualsnp_freq_list_false.append(casualsnp_freq_false)
+        actual_present_false.append(actual_present)
 
         data_list_false.append(data)
         label_list_false.append(single_labels)
-        bag_label_list_false.append(False)
-        if any(bag_label_list_false):
-            print("there is something wrong with false bag")
+        bag_label_list_false.append(bag_label)
+
+    if any(bag_label_list_false):
+        print("!!!!!!there is something wrong with false bag!!!!!!!")
+    
+    print("----------------------------------------------------------------------------------------")
+    print("------Table of casual SNP present stats false bag-----", pd.DataFrame(np.concatenate(causal_ind_list_false),columns =['causal_ind']).groupby(['causal_ind']).size())
+    print("------Frequency of casual SNP in False bag------",pd.DataFrame(casualsnp_freq_list_false).describe())    
+    print("------Actual number of SNP present False bag-------", pd.DataFrame(np.array(actual_present_false)/gene_length).describe())
+
+
+
 
     #Combine the true and false back then shuffle them
     data_list= data_list_true + data_list_false 
@@ -237,25 +285,34 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     train_data_list, valtest_data, train_bag_label_list, valtest_baglabel, train_label_list,valtest_label=train_test_split(data_list_out,bag_label_list_out, 
                                                                                                             label_list_out, test_size=1/3, random_state=1,stratify=bag_label_list_out)
 
-
     
     test_data_list, val_data_list, test_bag_label_list, val_bag_label_list, test_label_list, valid_label_list=train_test_split(valtest_data, valtest_baglabel, valtest_label, test_size=0.5, random_state=1, stratify= valtest_baglabel)                                                          
 
-
-    # # output the train and test set seperately
-    # train_data_list=data_list_out[:num_genes_train]
-    # test_data_list=data_list_out[num_genes_train:num_genes_train+num_genes_test]
-    # val_data_list=data_list_out[num_genes_train+num_genes_test:]
+    
+    #get present casual index 
+    causal_ind_list_train=[l for one_label in train_label_list for l, x in enumerate(one_label) if x]
+    causal_ind_list_test=[l for one_label in test_label_list for l, x in enumerate(one_label) if x]
+    causal_ind_list_val=[l for one_label in valid_label_list for l, x in enumerate(one_label) if x]
+    
+    print("----------------------------------------------------------------------------")
+    print("------Casual SNP present stats TRAIN SET-----", pd.DataFrame(causal_ind_list_train,columns =['causal_ind']).groupby(['causal_ind']).size())
+    print("------Casual SNP present stats TEST SET-----", pd.DataFrame(causal_ind_list_test,columns =['causal_ind']).groupby(['causal_ind']).size())
+    print("------Casual SNP present stats VALID SET----", pd.DataFrame(causal_ind_list_val,columns =['causal_ind']).groupby(['causal_ind']).size())
     
 
-    # train_label_list= label_list_out[:num_genes_train]
-    # test_label_list= label_list_out[num_genes_train:num_genes_train+num_genes_test]
-    # valid_label_list=label_list_out[num_genes_train+num_genes_test:]
+    #get present SNP frequency
+    causal_snp_freq_train=[sum(one_label) for one_label in train_label_list]
+    causal_snp_freq_test=[sum(one_label) for one_label in test_label_list]
+    causal_snp_freq_val=[sum(one_label) for one_label in valid_label_list]
 
-    # train_bag_label_list= bag_label_list_out[:num_genes_train]
-    # test_bag_label_list =bag_label_list_out[num_genes_train:num_genes_train+num_genes_test]
-    # val_bag_label_list=bag_label_list_out[num_genes_train+num_genes_test:]
 
+    print("----------------------------------------------------------------------------")
+    print("-----Casual snp frequency for train bag is---------", pd.DataFrame(causal_snp_freq_train).describe())
+    print("-----Casual snp frequency for test bag is----------", pd.DataFrame(causal_snp_freq_test).describe())
+    print("-----Casual snp frequency for validation bag is----------", pd.DataFrame(causal_snp_freq_val).describe())
+
+
+    
     return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list
 
 
@@ -265,10 +322,10 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 # num_genes_train=10
 # num_genes_test=8
 # prevalence=0.35
-# interaction=True
+# interaction=False
 
 
-# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=True)
+# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=interaction)
 
 # print(train_data_list[0])
 # print(test_data_list[0])

@@ -28,7 +28,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
 parser.add_argument('--epochs', type=int, default=500,)
-parser.add_argument('--lr', type=float, default=0.0005,
+parser.add_argument('--lr', type=float, default=0.0001,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
@@ -416,10 +416,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -458,11 +458,15 @@ if __name__ == "__main__":
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
         val_loss=val()
-        scheduler = ReduceLROnPlateau(optimizer, 'min',patience=10, min_lr=0.000001,factor=0.25,cooldown=5)
-        scheduler.step(val_loss)
+        if args.num_snp<=100:
+            scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.000001,factor=0.1,verbose=True)
+            scheduler.step(val_loss)
+        elif 100<args.num_snp<=2000:
+            scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.00000001,factor=0.1,verbose=True)
+            scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0005/"+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0005/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0001_twostep/"+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

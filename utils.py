@@ -83,7 +83,7 @@ def gen_binary_list_at_least_one_one(gene_length: int, mutation_positions: List[
 def gen_binary_list_all_mutation_one(gene_length: int, mutation_positions: List[int],num_snp_present:int) -> List[int]:
     
     all_position=list(range(gene_length))
-    present_list=np.zeros(gene_length)   
+    present_list=np.zeros(gene_length).tolist()   
     for j in mutation_positions:
         present_list[j]=1
         
@@ -101,7 +101,7 @@ def gen_binary_list_all_mutation_one(gene_length: int, mutation_positions: List[
 def gen_binary_list_non_mutation_one(gene_length: int, mutation_positions: List[int],num_snp_present:int) -> List[int]:
 
     all_position=list(range(gene_length))
-    present_list=np.zeros(gene_length)  
+    present_list=np.zeros(gene_length).tolist()  
 
     possible_present=[all_position[k] for k in all_position if k not in mutation_positions]
        
