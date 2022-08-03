@@ -28,7 +28,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
 parser.add_argument('--epochs', type=int, default=500,)
-parser.add_argument('--lr', type=float, default=0.0001,
+parser.add_argument('--lr', type=float, default=0.0008,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
@@ -41,7 +41,7 @@ parser.add_argument('--seed', type=int, default=1,
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
-parser.add_argument('-nsnp','--num_snp',type=int, default=100,help='number of SNP in every sample')
+parser.add_argument('-nsnp','--num_snp',type=int, default=100,help='number of SNP in elvery sample')
 parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
@@ -55,6 +55,7 @@ args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
 
 torch.manual_seed(args.seed)
+
 np.random.seed(args.seed)
 random.seed(args.seed)
 
@@ -240,11 +241,11 @@ def val():
 def test(PATH):
 
     #Using checkpoint to evaluate the model
-    if args.model=='attention':
-        model = Attention()
-    elif args.model=='gated_attention':
-        model = GatedAttention()
-    optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
+    # if args.model=='attention':
+    #     model = Attention()
+    # elif args.model=='gated_attention':
+    #     model = GatedAttention()
+    # optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
     if args.control_prevalence:
         PATH_LOAD=PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 
@@ -258,8 +259,8 @@ def test(PATH):
     loss = checkpoint['loss']
     print('We use the model in traing epoch', epoch, 'the loss was', float(loss))
 
-    if args.cuda:
-        model.cuda()
+    # if args.cuda:
+    #     model.cuda()
 
     model.eval()
     test_loss = 0.
@@ -416,10 +417,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -438,13 +439,12 @@ def test(PATH):
 
 
 #early stopping criteria
-n_epochs_stop = 35
-patience=10
+n_epochs_stop = 200
 if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -455,43 +455,47 @@ if __name__ == "__main__":
     
 
     min_loss=np.inf
+    if args.num_snp<=100:
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=15, min_lr=0.00001,factor=0.5,verbose=True)
+    elif 100<args.num_snp<=2000:  
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.000005,factor=0.8,verbose=True)
+
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
         val_loss=val()
+        print("validation loss:", val_loss)
+        
         if args.num_snp<=100:
-            scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.000001,factor=0.1,verbose=True)
             scheduler.step(val_loss)
-        elif 100<args.num_snp<=2000:
-            scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.00000001,factor=0.1,verbose=True)
+        elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0001_twostep/"+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_relu_reduceplateu_lr0.0001_twostep/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/"+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
         writer.add_scalar('validation loss',
                             val_loss/ epoch, epoch)
   
-        if epoch>patience:
-            # for saving best model and check early stoping criteria
-            if val_loss< min_loss:
-                min_loss=val_loss
-                epoch_min=epoch
-                epochs_no_improve = 0
+        # for saving best model and check early stoping criteria
+        if val_loss< min_loss:
+            min_loss=val_loss
+            epoch_min=epoch
+            epochs_no_improve = 0
 
-                model_state=model.state_dict()
-                optimizer_state=optimizer.state_dict()
+            model_state=model.state_dict()
+            optimizer_state=optimizer.state_dict()
 
-            else:
-                epochs_no_improve += 1
+        else:
+            epochs_no_improve += 1
 
-            if epoch > 5 and epochs_no_improve == n_epochs_stop:
-                print('Early stopping!' )
-                early_stop = True
-                break
-            else:
-                continue
+        if epoch > 5 and epochs_no_improve == n_epochs_stop:
+            print('Early stopping!' )
+            early_stop = True
+            break
+        else:
+            continue
 
             
 

@@ -290,15 +290,20 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
     
     #get present casual index 
+    # causal_ind_list_train=[l for one_label in train_label_list for l, x in enumerate(one_label) if x]
+    # causal_ind_list_test=[l for one_label in test_label_list for l, x in enumerate(one_label) if x]
+    # causal_ind_list_val=[l for one_label in valid_label_list for l, x in enumerate(one_label) if x]
+    
+    # print("----------------------------------------------------------------------------")
+    # print("------Casual SNP present stats TRAIN SET-----", pd.DataFrame(causal_ind_list_train,columns =['causal_ind']).groupby(['causal_ind']).size())
+    # print("------Casual SNP present stats TEST SET-----", pd.DataFrame(causal_ind_list_test,columns =['causal_ind']).groupby(['causal_ind']).size())
+    # print("------Casual SNP present stats VALID SET----", pd.DataFrame(causal_ind_list_val,columns =['causal_ind']).groupby(['causal_ind']).size())
+    
+    #casual snp combination
     causal_ind_list_train=[l for one_label in train_label_list for l, x in enumerate(one_label) if x]
     causal_ind_list_test=[l for one_label in test_label_list for l, x in enumerate(one_label) if x]
     causal_ind_list_val=[l for one_label in valid_label_list for l, x in enumerate(one_label) if x]
-    
-    print("----------------------------------------------------------------------------")
-    print("------Casual SNP present stats TRAIN SET-----", pd.DataFrame(causal_ind_list_train,columns =['causal_ind']).groupby(['causal_ind']).size())
-    print("------Casual SNP present stats TEST SET-----", pd.DataFrame(causal_ind_list_test,columns =['causal_ind']).groupby(['causal_ind']).size())
-    print("------Casual SNP present stats VALID SET----", pd.DataFrame(causal_ind_list_val,columns =['causal_ind']).groupby(['causal_ind']).size())
-    
+
 
     #get present SNP frequency
     causal_snp_freq_train=[sum(one_label) for one_label in train_label_list]
@@ -311,6 +316,27 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     print("-----Casual snp frequency for test bag is----------", pd.DataFrame(causal_snp_freq_test).describe())
     print("-----Casual snp frequency for validation bag is----------", pd.DataFrame(causal_snp_freq_val).describe())
 
+    #casual snp combination
+    causal_ind_by_sample_list_train=[[l for l, x in enumerate(one_label) if x] for one_label in train_label_list]
+    causal_ind_by_sample_list_test=[[l for l, x in enumerate(one_label) if x] for one_label in test_label_list]
+    causal_ind_by_sample_list_val=[[l for l, x in enumerate(one_label) if x] for one_label in valid_label_list]
+
+    print("----------------------------------------------------------------------------")
+    print("------Casual SNP present stats TRAIN SET-----", pd.DataFrame(np.concatenate(causal_ind_by_sample_list_train),columns =['causal_ind'],dtype=int).groupby(['causal_ind']).size())
+    print("------Casual SNP present stats TEST SET-----", pd.DataFrame(np.concatenate(causal_ind_by_sample_list_test),columns =['causal_ind'],dtype=int).groupby(['causal_ind']).size())
+    print("------Casual SNP present stats VALID SET----", pd.DataFrame(np.concatenate(causal_ind_by_sample_list_val),columns =['causal_ind'],dtype=int).groupby(['causal_ind']).size())
+    
+
+    causal_ind_by_sample_list_train=[[''.join(str(x) for x in k)]for k in causal_ind_by_sample_list_train]
+    causal_ind_by_sample_list_test=[[''.join(str(x) for x in k)]for k in causal_ind_by_sample_list_test]
+    causal_ind_by_sample_list_val=[[''.join(str(x) for x in k)]for k in causal_ind_by_sample_list_val]
+
+    print("----------------------------------------------------------------------------")
+    print("-----Casual SNP combination stats TRAIN SET----------",pd.DataFrame(causal_ind_by_sample_list_train,columns=['casual combination']).groupby(['casual combination']).size())
+    print("-----Casual SNP combination stats TEST SET----------", pd.DataFrame(causal_ind_by_sample_list_test,columns=['casual combination']).groupby(['casual combination']).size())
+    print("-----Casual SNP combination stats VALID SET--------",pd.DataFrame(causal_ind_by_sample_list_val,columns=['casual combination']).groupby(['casual combination']).size())
+
+
 
     
     return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list
@@ -319,7 +345,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 # gene_length=10
 # max_present=8
 # num_casual_snp=4
-# num_genes_train=10
+# num_genes_train=20
 # num_genes_test=8
 # prevalence=0.35
 # interaction=False

@@ -13,29 +13,36 @@ class Attention(nn.Module):
 
         self.feature_extractor_part1 = nn.Sequential(
             # nn.Conv2d(20, 50, kernel_size=1),
-            nn.Linear(3, 10),# note: change to mlp now for the encoding part
-            nn.ReLU(),
-            # nn.LeakyReLU(),#here changed to leakeyReLU
+            
+            #mlp as extrator
+            # nn.Linear(3, 10),# note: change to mlp now for the encoding part
+            nn.Linear(3, 10),
+            # nn.ReLU(),
+            nn.LeakyReLU(),#here changed to leakeyReLU
+            # nn.MaxPool1d(2, stride=2)
             nn.MaxPool1d(2, stride=2),
+            # nn.Linear(5, 20),
             nn.Linear(5, 20),
-            nn.ReLU(),
-            # nn.LeakyReLU(),#here changed to leakeyReLU
-            nn.MaxPool1d(2, stride=2)# note: changed to gru?
+            # nn.ReLU(),
+            nn.LeakyReLU(),#here changed to leakeyReLU
+            # nn.MaxPool1d(2, stride=2)
+            nn.MaxPool1d(2, stride=2)
 
             # conv1d trial
-            # nn.Conv1d(1, 15, kernel_size=1),
+            # nn.Conv1d(1, 10, kernel_size=1),
             # nn.ReLU(),
             # nn.MaxPool1d(2, stride=1),
-            # nn.Conv1d(15, 30, kernel_size=1),
+            # nn.Conv1d(10, 30, kernel_size=1),
             # nn.ReLU(),
-            # nn.MaxPool1d(2, stride=1)# note: changed to gru?
+            # nn.MaxPool1d(2, stride=1)
         )
 
         self.feature_extractor_part2 = nn.Sequential(
             # nn.Linear(30, self.L),
+            # nn.Linear(10, self.L),
             nn.Linear(10, self.L),
-            nn.ReLU(),
-            # nn.LeakyReLU(),#here changed to leakeyReLU
+            # nn.ReLU(),
+            nn.LeakyReLU(),#here changed to leakeyReLU
         )
 
         self.attention = nn.Sequential(
@@ -50,17 +57,34 @@ class Attention(nn.Module):
         )
 
     def forward(self, x):
+        # print(x.shape)
         x = x.squeeze(0)
+        # print(x.shape)
         # x = x.type(torch.FloatTensor)#added type change
         H = self.feature_extractor_part1(x)
+        # print(H.shape)
 
-        H = H.view(-1, 10)
+        #small mlp
+        # H = H.view(-1, 8)
+
+        #cnn
         # H = H.view(-1, 30)
+
+        #mlp
+        # H = H.view(-1, 10)
+        H = H.view(-1, 10)
+        # print(H.shape)
+
         H = self.feature_extractor_part2(H)  # NxL
+        # print(H.shape)
 
         A = self.attention(H)  # NxK
+        # print(A.shape)
         A = torch.transpose(A, 1, 0)  # KxN
+
+        # print(A.shape)
         A = F.softmax(A, dim=1)  # softmax over N
+        # print(A.shape)
 
         M = torch.mm(A, H)  # KxL
 
@@ -82,7 +106,7 @@ class Attention(nn.Module):
         Y_prob, _, A = self.forward(X)
         Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
 
-        #TODO: where potentially adding some weight to class imbalance
+       
         neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
 
         return neg_log_likelihood, A
@@ -107,7 +131,7 @@ class GatedAttention(nn.Module):
             nn.MaxPool1d(2, stride=2),
             nn.Linear(5, 20),
             nn.ReLU(),
-            nn.MaxPool1d(2, stride=2)# note: changed to gru?
+            nn.MaxPool1d(2, stride=2)
         )
 
         self.feature_extractor_part2 = nn.Sequential(
