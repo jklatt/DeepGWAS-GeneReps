@@ -417,10 +417,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_test/'+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_test/'+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_test/'+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -470,8 +470,8 @@ if __name__ == "__main__":
         elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/"+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_MLP_test/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_test/"+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_test/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
