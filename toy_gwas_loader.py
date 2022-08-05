@@ -129,7 +129,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     num_genes_false=int((1-prevalence)*num_genes)
 
     # generate the casual snp position list
-    target_mutation_pos=random.sample(range(gene_length+1),num_casual_snp)
+    target_mutation_pos=random.sample(range(gene_length),num_casual_snp)
     print("--The target mutation position is", sorted(target_mutation_pos))
 
     data_list_true=[]

@@ -16,31 +16,33 @@ class Attention(nn.Module):
             
             #mlp as extrator
             # nn.Linear(3, 10),# note: change to mlp now for the encoding part
-            nn.Linear(3, 10),
-            # nn.ReLU(),
-            nn.LeakyReLU(),#here changed to leakeyReLU
-            # nn.MaxPool1d(2, stride=2)
-            nn.MaxPool1d(2, stride=2),
+            # nn.Linear(3, 10),
+            # # nn.ReLU(),
+            # nn.LeakyReLU(),#here changed to leakeyReLU
+            # # nn.MaxPool1d(2, stride=2)
+            # nn.MaxPool1d(2, stride=2),
+            # # nn.Linear(5, 20),
             # nn.Linear(5, 20),
-            nn.Linear(5, 20),
-            # nn.ReLU(),
-            nn.LeakyReLU(),#here changed to leakeyReLU
+            # # nn.ReLU(),
+            # nn.LeakyReLU(),#here changed to leakeyReLU
+            # # nn.MaxPool1d(2, stride=2)
             # nn.MaxPool1d(2, stride=2)
-            nn.MaxPool1d(2, stride=2)
 
             # conv1d trial
-            # nn.Conv1d(1, 10, kernel_size=1),
-            # nn.ReLU(),
-            # nn.MaxPool1d(2, stride=1),
-            # nn.Conv1d(10, 30, kernel_size=1),
-            # nn.ReLU(),
-            # nn.MaxPool1d(2, stride=1)
+            nn.Conv1d(1, 10, kernel_size=1),
+            nn.ReLU(),
+            nn.MaxPool1d(2, stride=1),
+            nn.Conv1d(10, 30, kernel_size=1),
+            nn.ReLU(),
+            nn.MaxPool1d(2, stride=1)
         )
 
         self.feature_extractor_part2 = nn.Sequential(
-            # nn.Linear(30, self.L),
+            nn.Linear(30, self.L),
             # nn.Linear(10, self.L),
-            nn.Linear(10, self.L),
+            # nn.Linear(10, self.L),
+
+
             # nn.ReLU(),
             nn.LeakyReLU(),#here changed to leakeyReLU
         )
@@ -68,11 +70,10 @@ class Attention(nn.Module):
         # H = H.view(-1, 8)
 
         #cnn
-        # H = H.view(-1, 30)
+        H = H.view(-1, 30)
 
         #mlp
         # H = H.view(-1, 10)
-        H = H.view(-1, 10)
         # print(H.shape)
 
         H = self.feature_extractor_part2(H)  # NxL
