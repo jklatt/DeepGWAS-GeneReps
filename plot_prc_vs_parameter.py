@@ -64,6 +64,16 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, vari
     evaluation_scores_true_avg = get_avg_dic(evaluation_scores_true)
     evaluation_scores_false_avg = get_avg_dic(evaluation_scores_false)
 
+    if variating_parameter=="prevalence":
+        true_prevalence=list(evaluation_scores_true_avg.keys())
+        false_prevalence=list(evaluation_scores_false_avg.keys())
+        for t in range(len(true_prevalence)):
+            evaluation_scores_true_avg[true_prevalence[t]]['prc_auc_mean']=evaluation_scores_true_avg[true_prevalence[t]]['prc_auc_mean']/float(true_prevalence[t][10:])
+            evaluation_scores_false_avg[false_prevalence[t]]['prc_auc_mean']=evaluation_scores_false_avg[false_prevalence[t]]['prc_auc_mean']/float(false_prevalence[t][10:])
+
+        
+
+
     return evaluation_scores_true_avg, evaluation_scores_false_avg 
 
 
@@ -91,7 +101,7 @@ def get_avg_dic(evaluation_scores_true):
 def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evaluation_scores_true_avg, interaction, path):
 
     if 'snp' in list(evaluation_scores_true_avg.keys())[0]:
-                split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('p')]
+        split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('p')]
         
     else:
         split_element=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('0')-1]
@@ -125,12 +135,23 @@ def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evalu
     axis[0].set_ylim([0,1])
     axis[0].set_ylabel("AUROC")
 
-    axis[1].set_xticks(x, parameters)
-    axis[1].plot(x, values_arr_prc, "-^",color="orange")
-    axis[1].errorbar(x, values_arr_prc, yerr=sd_arr_prc,elinewidth=5)
-    axis[1].set_xlim([0,max(x)])
-    axis[1].set_ylim([0,1])
-    axis[1].set_ylabel("AUPRC")
+
+    if variating_parameter=="prevalence":
+        axis[1].set_xticks(x, parameters)
+        axis[1].plot(x, values_arr_prc, "-^",color="orange")
+        axis[1].errorbar(x, values_arr_prc, yerr=sd_arr_prc,elinewidth=5)
+        axis[1].set_xlim([0,max(x)])
+        axis[1].set_ylim([0,5])
+        axis[1].set_ylabel("AUPRC")
+
+    else:
+        axis[1].set_xticks(x, parameters)
+        axis[1].plot(x, values_arr_prc, "-^",color="orange")
+        axis[1].errorbar(x, values_arr_prc, yerr=sd_arr_prc,elinewidth=5)
+        axis[1].set_xlim([0,max(x)])
+        axis[1].set_ylim([0,1])
+        axis[1].set_ylabel("AUPRC")
+
 
 
 
@@ -148,7 +169,7 @@ def ploting_seed_avg(criteria1, criteria2, criteria3, variating_parameter, evalu
 
 
 
-seeds=list(range(1,6))
+seeds=list(range(1,3))
 
 #max_present snp=20
 # criteria1="nsnp20"
@@ -171,27 +192,25 @@ seeds=list(range(1,6))
 
 
 #max_present snp=200
-criteria1="nsnp200"
-criteria2="csnp3"
-criteria3="prevalence0.35.pkl"
-variating_parameter="max_present"
+# criteria1="nsnp200"
+# criteria2="csnp3"
+# criteria3="prevalence0.35.pkl"
+# variating_parameter="max_present"
 
-# #num_csnp snp=200
+#num_csnp snp=200
 # criteria1="nsnp200"
 # criteria2="max0.8"
 # criteria3="prevalence0.35.pkl"
 # variating_parameter="csnp"
 
 #prevalence snp=200
-# criteria1="nsnp200"
-# criteria2="csnp3"
-# criteria3="max0.8"
-# variating_parameter="prevalence"
+criteria1="nsnp200"
+criteria2="csnp3"
+criteria3="max0.8"
+variating_parameter="prevalence"
 
-
-
-path="/home/zixshu/DeepGWAS/metrics_bedreader_relu_lr0.0001/"
-saving_path="/home/zixshu/DeepGWAS/plot_prc_vs_parameter_relu_lr0.0001/"
+path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0009_twostep_MLP_upsampling/"
+saving_path="/home/zixshu/DeepGWAS/plot_prc_vs_parameter_leakyrelu_MLP_lr0.0009_factor0.8_upsampling/"
 os.makedirs(saving_path,exist_ok=True)
 evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter,path)
 

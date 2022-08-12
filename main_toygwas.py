@@ -98,10 +98,11 @@ if args.cuda:
 
 overampling=args.oversampling
 
-if (1/bag_class_weight_train[0]<=0.35) & (overampling==True):
+if (1/bag_class_weight_train[0]<0.5) & (overampling==True):
     print('Using resampling')
+    # this here change to upsampling to balance dataset in the training model
     true_bag=[i for i, x in enumerate(bag_label_list_train) if x]
-    res_ind=random.choices(true_bag,k=int(len(bag_label_list_train)*0.1))
+    res_ind=random.choices(true_bag,k=int(len(bag_label_list_train)*(0.5-1/bag_class_weight_train[0])))
     counter=collections.Counter(res_ind)
 
     print('The three most commom samples', counter.most_common(3),'the total length of append dataset is', len(res_ind))
@@ -417,10 +418,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_upsampling/'+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_upsampling/'+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -444,7 +445,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_upsampling/'+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -456,9 +457,12 @@ if __name__ == "__main__":
 
     min_loss=np.inf
     if args.num_snp<=100:
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=15, min_lr=0.00001,factor=0.5,verbose=True)
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=15, min_lr=0.00001,factor=0.6,verbose=True)
     elif 100<args.num_snp<=2000:  
         scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.000005,factor=0.8,verbose=True)
+
+    elif 500<args.num_snp<=2000:  
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.000005,factor=0.85,verbose=True)
 
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
@@ -470,8 +474,8 @@ if __name__ == "__main__":
         elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_upsampling/"+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr0.001_twostep_CNN_upsampling/'+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/".format(args.lr)+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
