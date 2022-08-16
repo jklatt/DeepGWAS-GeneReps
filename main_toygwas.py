@@ -28,7 +28,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
 
 parser.add_argument('--epochs', type=int, default=500,)
-parser.add_argument('--lr', type=float, default=0.00095,
+parser.add_argument('--lr', type=float, default=0.00015,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
@@ -464,7 +464,7 @@ if __name__ == "__main__":
 
     elif 500<args.num_snp<=2000:  
         #patience was 10
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=8, min_lr=0.000005,factor=0.7,verbose=True)
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=8, min_lr=0.00001,factor=0.8,verbose=True)
 
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
