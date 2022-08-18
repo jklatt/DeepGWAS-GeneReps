@@ -107,7 +107,7 @@ criteria3_base="max0.8"
 criteria4_base="prevalence0.35"
 
 
-path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.00015_twostep_MLP_upsampling/"
+path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0004_twostep_MLP_upsampling/"
 
 reference_setting={}
 reference_setting["interaction_true"]={}
@@ -334,7 +334,7 @@ criteriapre3="max0.8"
 
 
 
-saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter/"
+saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_lr0.0004/"
 os.makedirs(saving_path,exist_ok=True)
 
 ploting_outputs(criteria1_base,criteria2_base, criteria3_base,criteria4_base,criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,saving_path)

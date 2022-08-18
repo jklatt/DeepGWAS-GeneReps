@@ -75,7 +75,7 @@ class Attention(nn.Module):
         # print(x.shape)
         # x = x.type(torch.FloatTensor)#added type change
         H = self.feature_extractor_part1(x)
-        print(H.shape)
+        # print(H.shape)
 
         #small mlp
         # H = H.view(-1, 8)
