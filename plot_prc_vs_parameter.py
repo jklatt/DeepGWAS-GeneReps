@@ -178,10 +178,10 @@ seeds=list(range(1,3))
 # variating_parameter="max_present"
 
 # #num_csnp snp=20
-# criteria1="nsnp20"
-# criteria2="max1.0"
-# criteria3="prevalence0.35.pkl"
-# variating_parameter="csnp"
+criteria1="nsnp20"
+criteria2="max1.0"
+criteria3="prevalence0.35.pkl"
+variating_parameter="csnp"
 
 #prevalence snp=20
 # criteria1="nsnp20"
@@ -204,10 +204,10 @@ seeds=list(range(1,3))
 # variating_parameter="csnp"
 
 #prevalence snp=200
-criteria1="nsnp200"
-criteria2="csnp3"
-criteria3="max0.8"
-variating_parameter="prevalence"
+# criteria1="nsnp200"
+# criteria2="csnp3"
+# criteria3="max0.8"
+# variating_parameter="prevalence"
 
 path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0009_twostep_MLP_upsampling/"
 saving_path="/home/zixshu/DeepGWAS/plot_prc_vs_parameter_leakyrelu_MLP_lr0.0009_factor0.8_upsampling/"

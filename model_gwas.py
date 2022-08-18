@@ -29,6 +29,13 @@ class Attention(nn.Module):
             # nn.MaxPool1d(2, stride=2)
             nn.MaxPool1d(2, stride=2)
 
+            #bigger setting
+            # nn.Linear(3, 30),
+            # nn.LeakyReLU(),
+            # nn.MaxPool1d(2, stride=2),
+            # nn.Linear(15, 60),
+            # nn.LeakyReLU(),
+            # nn.MaxPool1d(2, stride=2)     
 
 
 
@@ -68,7 +75,7 @@ class Attention(nn.Module):
         # print(x.shape)
         # x = x.type(torch.FloatTensor)#added type change
         H = self.feature_extractor_part1(x)
-        # print(H.shape)
+        print(H.shape)
 
         #small mlp
         # H = H.view(-1, 8)
