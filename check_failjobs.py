@@ -2,11 +2,11 @@ import os
 
 
 
-PATH="/home/zixshu/DeepGWAS/output_twostep_leakyrelu_mlp_lr0.00015_upsampling_onefail20200"
+PATH="/home/zixshu/DeepGWAS/output_lr0.0004"
 filenames=os.listdir(PATH)
 count=0
 for name in filenames:
-    if "2000" in name:
+    if "2000" not in name:
     # if "lr0.003" in name:
         filepath=PATH+"/"+name
         with open(filepath) as f:

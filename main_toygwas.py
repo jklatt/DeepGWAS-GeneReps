@@ -23,6 +23,7 @@ from utils import get_weight, save_file
 from torch.utils.tensorboard import SummaryWriter
 import pickle
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+import pandas as pd
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
@@ -41,7 +42,7 @@ parser.add_argument('--seed', type=int, default=1,
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
-parser.add_argument('-nsnp','--num_snp',type=int, default=100,help='number of SNP in elvery sample')
+parser.add_argument('-nsnp','--num_snp',type=int, default=15,help='number of SNP in elvery sample')
 parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
@@ -275,6 +276,8 @@ def test(PATH):
     attention_array_list=[]
     single_labels_list=[]
     y_prob_list=[]
+    attention_array_true_list=[]
+    max_attention_list=[]
 
 
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
@@ -306,10 +309,16 @@ def test(PATH):
            single_labels=instance_labels.numpy()[0].tolist()
            if single_labels[max_attention[0]]:
                rightattention_count+=1 
+               max_attention_list.append(max_attention)
 
-           #prepare list for instance level ROC
-           attention_array_list.append(attention_array)
-           single_labels_list.append(single_labels)
+
+           attention_array_true_list.append(attention_array)
+           
+
+
+        #prepare list for instance level ROC
+        attention_array_list.append(attention_weights.cpu().data.numpy()[0].tolist())
+        single_labels_list.append(instance_labels.numpy()[0].tolist())
 
            
 
@@ -321,8 +330,16 @@ def test(PATH):
             print('\nTrue Bag Label, Predicted Bag Label: {}\n'
                   'True Instance Labels, Attention Weights: {}'.format(bag_level, instance_level))
 
-
-
+    max_pos_df=pd.DataFrame(np.concatenate(max_attention_list)).groupby([0]).size().sort_values(ascending=False)
+    print("------------------------------------------------------------------------")
+    print("Max Attention Position Statistics", max_pos_df)
+    attention_true=pd.DataFrame(attention_array_true_list)
+    attention_df=pd.DataFrame(attention_array_list)
+    print("------------------------------------------------------------------------")
+    print("The averaging attention weight by position predicted TRUE bags", pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
+    print("------------------------------------------------------------------------")
+    print("The averaging attention weight by position ALL bags", pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
+    print("------------------------------------------------------------------------")
 
     test_error /= len(test_loader)
     test_loss /= len(test_loader)
@@ -418,10 +435,10 @@ def test(PATH):
     plt.tight_layout()
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_diffschedular_test/'.format(args.lr)+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_diffschedular_test/'.format(args.lr)+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -445,7 +462,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_diffschedular_test/'.format(args.lr)+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -479,8 +496,8 @@ if __name__ == "__main__":
         elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/".format(args.lr)+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling/'.format(args.lr)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_diffschedular_test/".format(args.lr)+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_diffschedular_test/'.format(args.lr)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
