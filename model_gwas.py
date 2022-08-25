@@ -30,10 +30,10 @@ class Attention(nn.Module):
             nn.MaxPool1d(2, stride=2)
 
             #bigger setting
-            # nn.Linear(3, 30),
+            # nn.Linear(3, 300),
             # nn.LeakyReLU(),
             # nn.MaxPool1d(2, stride=2),
-            # nn.Linear(15, 60),
+            # nn.Linear(150, 600),
             # nn.LeakyReLU(),
             # nn.MaxPool1d(2, stride=2)     
 
@@ -49,7 +49,7 @@ class Attention(nn.Module):
         )
 
         self.feature_extractor_part2 = nn.Sequential(
-            # nn.Linear(30, self.L),
+            # nn.Linear(300, self.L),
             nn.Linear(10, self.L),
             # nn.Linear(10, self.L),
 
@@ -81,7 +81,7 @@ class Attention(nn.Module):
         # H = H.view(-1, 8)
 
         #cnn
-        # H = H.view(-1, 30)
+        # H = H.view(-1, 300)
 
         #mlp
         H = H.view(-1, 10)

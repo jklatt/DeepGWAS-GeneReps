@@ -118,7 +118,7 @@ def generate_samples(gene_lenggen_binary_list_non_mutation_oneth, max_present,nu
 
 
 
-def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False, seed=1):
+def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=False, seed=1,non_causal=0):
     #this function generate the true and false sample seperately to achieve the predefined prevalence
     random.seed(seed)
     np.random.seed(seed)
@@ -274,7 +274,11 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     #Combine the true and false back then shuffle them
     data_list= data_list_true + data_list_false 
     label_list=label_list_true+label_list_false
-    bag_label_list=bag_label_list_true+bag_label_list_false
+    if non_causal==1:
+        bag_label_list=random.choices([True, False],k=len(label_list))
+
+    else:
+        bag_label_list=bag_label_list_true+bag_label_list_false
 
 
     temp=list(zip(data_list, label_list, bag_label_list))
@@ -351,7 +355,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 # interaction=False
 
 
-# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=interaction)
+# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=interaction,non_casual=1)
 
 # print(train_data_list[0])
 # print(test_data_list[0])
