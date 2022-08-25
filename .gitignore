@@ -1,3 +1,19 @@
+
+
+A_thaliana/__pycache__
+A_thaliana/X_genic/
+A_thaliana/X_genic_full/
+A_thaliana/gene2snp/
+A_thaliana/max_present_stat/
+A_thaliana/plots_stat/
+A_thaliana/chr_gen_pos_dictionary.pkl
+A_thaliana/*slurm*
+A_thaliana/*png*
+A_thaliana/*csv*
+A_thaliana/max_present_stat_bed_reader
+*csv*
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -127,3 +143,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+*vscode/*
