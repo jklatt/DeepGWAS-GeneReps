@@ -5,7 +5,7 @@ import pickle
 import os
 import numpy as np
 
-ploting_snp="200"
+ploting_snp="20"
 def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter, path):
     # extracting max_present dictionary
     evaluation_scores_true={}
@@ -92,8 +92,8 @@ def get_avg_dic(evaluation_scores_true):
     return evaluation_scores_true_avg
 
 
-seeds=range(1,6)
-selected_seed=range(1,6)
+seeds=range(1,3)
+selected_seed=range(1,3)
 if ploting_snp=="20":
     #snp20
     criteria1_base="nsnp20"
@@ -107,8 +107,30 @@ elif ploting_snp=="200":
     criteria3_base="max0.8"
     criteria4_base="prevalence0.35"
 
+elif ploting_snp=="100":
+    #snp100
+    criteria1_base="nsnp100"
+    criteria2_base="csnp3"
+    criteria3_base="max0.95"
+    criteria4_base="prevalence0.35"
 
-path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0003_twostep_MLP_upsampling_attweight/"
+elif ploting_snp=="50":
+    #snp50
+    criteria1_base="nsnp50"
+    criteria2_base="csnp3"
+    criteria3_base="max1.0"
+    criteria4_base="prevalence0.35"
+
+elif ploting_snp=="150":
+    #snp150
+    criteria1_base="nsnp150"
+    criteria2_base="csnp3"
+    criteria3_base="max0.9"
+    criteria4_base="prevalence0.35"
+
+
+
+path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_weightedfix/"
 
 reference_setting={}
 calculating_avg={}
@@ -414,9 +436,43 @@ elif ploting_snp=="200":
     criteriapre2="csnp3" 
     criteriapre3="max0.8"
 
+elif ploting_snp=="100":
+    #nsnp 100 setting
+    criteriasnp1="nsnp100_"
+    criteriasnp2="max0.95"
+    criteriasnp3="prevalence0.35.pkl"
+    criteriamax1="nsnp100_"
+    criteriamax2="csnp3"
+    criteriamax3="prevalence0.35.pkl"
+    criteriapre1="nsnp100_"
+    criteriapre2="csnp3" 
+    criteriapre3="max0.95"
 
+elif ploting_snp=="50":
+    #nsnp 50 setting
+    criteriasnp1="nsnp50_"
+    criteriasnp2="max1.0"
+    criteriasnp3="prevalence0.35.pkl"
+    criteriamax1="nsnp50_"
+    criteriamax2="csnp3"
+    criteriamax3="prevalence0.35.pkl"
+    criteriapre1="nsnp50_"
+    criteriapre2="csnp3" 
+    criteriapre3="max1.0"
 
-saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_lr0.0003_attweight/"
+elif ploting_snp=="150":
+    #nsnp 50 setting
+    criteriasnp1="nsnp150_"
+    criteriasnp2="max0.9"
+    criteriasnp3="prevalence0.35.pkl"
+    criteriamax1="nsnp150_"
+    criteriamax2="csnp3"
+    criteriamax3="prevalence0.35.pkl"
+    criteriapre1="nsnp150_"
+    criteriapre2="csnp3" 
+    criteriapre3="max0.9"
+
+saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_lr0.0005_weightedfixed/"
 os.makedirs(saving_path,exist_ok=True)
 
 ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base,criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,saving_path)

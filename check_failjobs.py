@@ -2,11 +2,11 @@ import os
 
 
 
-PATH="/home/zixshu/DeepGWAS/output_1000_try"
+PATH="/home/zixshu/DeepGWAS/output_attention_weightedfixed"
 filenames=os.listdir(PATH)
 count=0
 for name in filenames:
-    if "2000" not in name:
+    if "1000" in name:
     # if "lr0.003" in name:
         filepath=PATH+"/"+name
         with open(filepath) as f:
@@ -28,5 +28,5 @@ print("the number of failed job is", count)
 # 43 fail with 0.00015
 
 #he number of failed job is 47 with seed 1 2 big mlp for 2000 0.0003
-#14 fail with snp1000 lr 0.0003
+#13 fail with snp1000 lr 0.0003
 #25 faill with 0.0005
