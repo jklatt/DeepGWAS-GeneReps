@@ -1,4 +1,11 @@
+.gitignore
 
+# virtualenv
+
+bin/
+etc/
+pyvenv.cfg
+share/
 
 A_thaliana/__pycache__
 A_thaliana/X_genic/
