@@ -1,5 +1,12 @@
+.gitignore
 
+# virtualenv
+bin/
+etc/
+pyvenv.cfg
+share/
 
+# custom
 A_thaliana/__pycache__
 A_thaliana/X_genic/
 A_thaliana/X_genic_full/
@@ -12,7 +19,6 @@ A_thaliana/*png*
 A_thaliana/*csv*
 A_thaliana/max_present_stat_bed_reader
 *csv*
-
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
