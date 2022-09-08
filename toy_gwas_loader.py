@@ -349,19 +349,19 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list
 
 
-gene_length=10
-max_present=8
-num_casual_snp=4
-num_genes_train=20
-num_genes_test=8
-prevalence=0.35
-interaction=False
+# gene_length=10
+# max_present=8
+# num_casual_snp=4
+# num_genes_train=20
+# num_genes_test=8
+# prevalence=0.35
+# interaction=False
 
 
-train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=interaction,non_causal=1)
+# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=interaction,non_causal=1)
 
-print(train_data_list[0])
-print(test_data_list[0])
+# print(train_data_list[0])
+# print(test_data_list[0])
 
 
 

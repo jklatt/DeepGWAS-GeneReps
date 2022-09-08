@@ -247,7 +247,7 @@ class SetTransformer(nn.Module):
         self,
         dim_input=3,
         num_outputs=1,
-        dim_output=40,
+        dim_output=2,
         num_inds=32,
         dim_hidden=128,
         num_heads=4,
@@ -269,24 +269,34 @@ class SetTransformer(nn.Module):
             nn.Sigmoid()
         )
 
+        # self.criteria=F.binary_cross_entropy_with_logits
         self.criteria=nn.BCELoss()
 
 
     def forward(self, X):
         # print(X.shape)
-
         X = X.squeeze(2)
         H=self.dec(self.enc(X)).squeeze()
         Y_prob=self.classifier(H)
+        # Y_prob=H
+        
         Y_hat = torch.ge(Y_prob, 0.5).float()
-
+ 
         return Y_prob,Y_hat
 
 
     def calculate_objective(self, X, Y):
         Y = Y.float()
+        # if Y==0:
+        #     Y=torch.tensor([1,0]).cuda()
+        #     Y = Y.float()
+        # else:
+        #     Y=torch.tensor([1,0]).cuda()
+        #     Y = Y.float()
         Y_prob, _= self.forward(X)
-        Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
+        # Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
+        # print((Y_prob.shape))
+        # print((Y.shape))
         loss=self.criteria(Y_prob,Y)
 
         # neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli 

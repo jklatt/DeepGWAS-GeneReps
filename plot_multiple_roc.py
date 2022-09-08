@@ -52,7 +52,7 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction, nu
         split_element=list(list(evaluation_scores_true.keys())[0])[list(list(evaluation_scores_true.keys())[0]).index('0')-1]
 
     parameters=sorted(list(evaluation_scores_true.keys()), key=lambda x: float(x.split(split_element)[-1]))
-## bag level roc
+    ## bag level roc
     figure, axis = plt.subplots(2, 2, figsize=(7, 7))
     figure.suptitle('nsnp{} csnp3 prevalence0.35 i{} and variating {}'.format(num_snp, interaction,variating_variable))
 
@@ -67,7 +67,7 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction, nu
     axis[0, 0].set_ylim([0, 1])
     axis[0, 0].plot([0, 1], [0, 1],'r--')
 
-## bag level prc
+    ## bag level prc
     for parameter in parameters:
         axis[0, 1].plot(evaluation_scores_true[parameter]['recall'], evaluation_scores_true[parameter]['precision'],label="{} AUC=".format(parameter)+str(round(evaluation_scores_true[parameter]['prc_avg'],3)))
     axis[0, 1].legend()
@@ -80,7 +80,7 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction, nu
     axis[0, 1].axhline(y=0.35, color='grey', linestyle='dotted')
 
 
-## instance level roc
+    ## instance level roc
     for parameter in parameters:
         axis[1, 0].plot(evaluation_scores_true[parameter]['fpr_instance'],evaluation_scores_true[parameter]['tpr_instance'],label="{} AUC=".format(parameter)+str(round(evaluation_scores_true[parameter]['roc_auc_instance'],3)))
     axis[1, 0].legend()
@@ -92,7 +92,7 @@ def plot_comparisions(evaluation_scores_true, variating_variable,interaction, nu
     axis[1, 0].set_ylim([0, 1])
     axis[1, 0].plot([0, 1], [0, 1],'r--')
 
-# instance level prc
+    # instance level prc
     for parameter in parameters:
         axis[1, 1].plot(evaluation_scores_true[parameter]['recall_instance'], evaluation_scores_true[parameter]['precision_instance'],label="{} AUC=".format(parameter)+str(round((evaluation_scores_true[parameter]['prc_avg_instance']),3)))
     axis[1, 1].legend()

@@ -2,7 +2,7 @@ import os
 
 
 
-PATH="/home/zixshu/DeepGWAS/output_attention_weightedfixed"
+PATH="/home/zixshu/DeepGWAS/output_attention_lr0.0005_weightedfixed/"
 filenames=os.listdir(PATH)
 count=0
 for name in filenames:
