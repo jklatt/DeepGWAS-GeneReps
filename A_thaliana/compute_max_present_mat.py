@@ -14,10 +14,10 @@ from bed_reader import open_bed
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--maf',required=True)
-parser.add_argument('--chr',type=int,required=True)
-# parser.add_argument('--maf',default=0.1)
-# parser.add_argument('--chr',type=int,default=1)
+# parser.add_argument('--maf',required=True)
+# parser.add_argument('--chr',type=int,required=True)
+parser.add_argument('--maf',default=0.1)
+parser.add_argument('--chr',type=int,default=1)
 args = parser.parse_args()
 
 
@@ -69,7 +69,7 @@ for gene in gene_list:
 # overll_minor_persample_pergene=list(np.concatenate(overll_minor_persample_pergene))
 
 #outputting the file
-save_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/max_present_stat_bed_reader/minor_present_percentage_{}MAF_chr{}.pkl'.format(args.maf, args.chr), gene_by_sample_prop_list)
+# save_file('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/max_present_stat_bed_reader/minor_present_percentage_{}MAF_chr{}.pkl'.format(args.maf, args.chr), gene_by_sample_prop_list)
 
 
 

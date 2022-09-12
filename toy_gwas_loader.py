@@ -132,6 +132,8 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     target_mutation_pos=random.sample(range(gene_length),num_casual_snp)
     print("--The target mutation position is", sorted(target_mutation_pos))
 
+    values_list=np.random.randint(0,4,gene_length)
+
     data_list_true=[]
     label_list_true=[]
     bag_label_list_true=[]
@@ -175,7 +177,8 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
             
         for index in range(gene_length):
-            values = randint(0, 4)
+            # values = randint(0, 4)
+            values=values_list[index]
             item= [[index,values,present_list[index]]]
             data[index]=item
 
@@ -239,7 +242,8 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
            
             
         for index in range(gene_length):
-            values = randint(0, 4)
+            # values = randint(0, 4)
+            values=values_list[index]
             item= [[index,values,present_list[index]]]
             data[index]=item
 
