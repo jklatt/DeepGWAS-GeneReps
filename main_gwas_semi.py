@@ -1,34 +1,26 @@
 from __future__ import print_function
-from ast import arg
-from statistics import variance
-# from code import interact
-# from tkinter import Label
-
 import numpy as np
 import argparse
 import torch
-# import torch.utils.data as data_utils
 import torch.optim as optim
 from torch.autograd import Variable
-from toy_gwas_loader import generate_samples, generate_samples_prev
 from model_gwas import Attention, GatedAttention, SetTransformer
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 import os
-
-from collections import Counter
 import random
 import collections
-from utils import get_weight, save_file
+from utils import get_weight, save_file,load_file
 from torch.utils.tensorboard import SummaryWriter
 import pickle
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import pandas as pd
+from A_thaliana.gen_semi_natural_setting_inputs import gene_data_gen
+from sklearn.model_selection import train_test_split
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
-
 parser.add_argument('--epochs', type=int, default=500,)
 parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
@@ -43,15 +35,12 @@ parser.add_argument('--seed', type=int, default=1,
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='set_transformer', help='Choose b/w attention and gated_attention')
-parser.add_argument('-nsnp','--num_snp',type=int, default=15,help='number of SNP in elvery sample')
-parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
-parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
-parser.add_argument('-pre','--prevalence',type=float,default=0.1, help='the ratio of true bag and false bag in generated samples')
-parser.add_argument('-cprgevalene','--control_prevalence',type=bool,default=True, help='if we control prevalence when generating samples')
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
+parser.add_argument('--selected_length',type=int,default=20, help='selected length from nature data')
+parser.add_argument('--gene_ind',type=int,default=0, help='selected gene index')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
@@ -75,17 +64,11 @@ if args.interaction==1:
 else:
     args.interaction=False
 
-if args.control_prevalence:
-    # prevalence as parameter sample generation
-    data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test,val_data_list,val_label_list, val_bag_label_list=generate_samples_prev(gene_length=args.num_snp, 
-    max_present=int(args.max_present*args.num_snp) ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction,seed=args.seed, non_causal=args.non_causal)
-
-else:
-    # without controling prevalence sample generation
-    data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test,val_data_list,val_bag_label_list,val_label_list=generate_samples(gene_length=args.num_snp,
-    max_present=int(args.max_present*args.num_snp),num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction,seed=args.seed, non_causal=args.non_causal)
-
-
+present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}.pkl".format(args.selected_length))
+bag_label_list, data_list, single_labels_list=gene_data_gen(args.gene_ind,present_df, args.selected_length, args.interaction)
+data_list_train, valtest_data, bag_label_list_train, valtest_baglabel, label_list_train,valtest_label=train_test_split(data_list,bag_label_list, 
+                                                                                                            single_labels_list, test_size=1/3, random_state=1,stratify=bag_label_list)
+data_list_test, val_data_list, bag_label_list_test, val_bag_label_list, label_list_test, val_label_list=train_test_split(valtest_data, valtest_baglabel, valtest_label, test_size=0.5, random_state=1, stratify= valtest_baglabel)                                                          
 
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
@@ -519,10 +502,10 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_noncasual/'.format(args.lr,args.model)+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_noncasual/'.format(args.lr,args.model)+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -546,7 +529,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_noncasual/'.format(args.lr,args.model)+ str(args.seed)
+    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -580,8 +563,8 @@ if __name__ == "__main__":
         elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_noncasual/".format(args.lr,args.model)+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_noncasual/'.format(args.lr,args.model)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/".format(args.lr,args.model)+ str(args.gene_ind), exist_ok=True)
+        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
