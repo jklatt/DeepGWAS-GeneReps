@@ -92,8 +92,8 @@ def get_avg_dic(evaluation_scores_true):
     return evaluation_scores_true_avg
 
 
-seeds=range(1,4)
-selected_seed=range(1,4)
+seeds=range(1,6)
+selected_seed=range(1,6)
 if ploting_snp=="20":
     #snp20
     criteria1_base="nsnp20"

@@ -4,11 +4,11 @@ import random
 import os
 import pandas as pd
 
-present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength20.pkl")
-selected_length=20
-interaction=False
-gene=0 #range{0,5}
-random.seed(1)
+# present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength20_seed2.pkl")
+# selected_length=20
+# interaction=False
+# gene=0 #range{0,5}
+# random.seed(1)
 def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     # for  in range(len(present_df)):
     data_list=[]
@@ -19,6 +19,7 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     snp_identifier=list(range(selected_length))
     snp_type=np.random.randint(0,4,selected_length)
     target_mutation_pos=random.sample(range(selected_length),3)
+    print("the target mutation position is", target_mutation_pos)
 
     for sample in gene_present:
         single_labels=[]
@@ -41,14 +42,14 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
             bag_label=any(bag_label_check)
         bag_label_list.append(bag_label)
 
-    print("The prevalence of the data is",bag_label_list)
+    # print("The prevalence of the data is",bag_label_list)
 
     return bag_label_list, data_list, single_labels_list
 
-bag_label_list, data_list, single_labels_list=gene_data_gen(gene,present_df, selected_length, interaction)
-print(bag_label_list)
-print(data_list)
-print(single_labels_list)
+# bag_label_list, data_list, single_labels_list=gene_data_gen(gene,present_df, selected_length, interaction)
+# print(bag_label_list)
+# print(data_list)
+# print(single_labels_list)
 
     # save_file=zip(data_list,single_labels_list, bag_label_list)
     # SAVE_PATH="/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/select_gene_samples"

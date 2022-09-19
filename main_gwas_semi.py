@@ -30,7 +30,7 @@ parser.add_argument('--num_bags_train', type=int, default=800,
                     help='number of bags in training set')
 parser.add_argument('--num_bags_test', type=int, default=200,
                     help='number of bags in test set')
-parser.add_argument('--seed', type=int, default=1,
+parser.add_argument('--seed', type=int, default=2,
                     help='random seed (default: 1)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
@@ -64,7 +64,7 @@ if args.interaction==1:
 else:
     args.interaction=False
 
-present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}.pkl".format(args.selected_length))
+present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(args.selected_length))
 bag_label_list, data_list, single_labels_list=gene_data_gen(args.gene_ind,present_df, args.selected_length, args.interaction)
 data_list_train, valtest_data, bag_label_list_train, valtest_baglabel, label_list_train,valtest_label=train_test_split(data_list,bag_label_list, 
                                                                                                             single_labels_list, test_size=1/3, random_state=1,stratify=bag_label_list)
@@ -264,11 +264,8 @@ def test(PATH):
     # elif args.model=='gated_attention':
     #     model = GatedAttention()
     # optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
-    if args.control_prevalence:
-        PATH_LOAD=PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 
-    else:
-        PATH_LOAD=PATH+'/nsnp{}_max{}_csnp{}_i{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+    PATH_LOAD=PATH+'/gene_ind{}_i{}.pt'.format(args.gene_ind,args.interaction)
 
     checkpoint = torch.load(PATH_LOAD)
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -432,7 +429,7 @@ def test(PATH):
    
     if args.model!="set_transformer":
         figure, axis = plt.subplots(2, 2, figsize=(7, 7))
-        figure.suptitle('nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence), fontsize=16)
+        figure.suptitle('gene_ind{}_i{}'.format(args.gene_ind,args.interaction), fontsize=16)
 
         axis[0, 0].set_title('Bag level ROC')
         axis[0, 0].plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
@@ -475,7 +472,7 @@ def test(PATH):
 
     else:
         figure, axis = plt.subplots(1, 2, figsize=(7, 7))
-        figure.suptitle('nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence), fontsize=16)
+        figure.suptitle('gene_ind{}_i{}'.format(args.gene_ind,args.interaction), fontsize=16)
 
         axis[0].set_title('Bag level ROC')
         axis[0].plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
@@ -502,21 +499,15 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)
+    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
-    if args.prevalence:
-        PLOT_PATH=SAVING_PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
-        EVALUATION_PATH=EVALUATION_SAVINGPATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 
-
-        
-    else:
-        PLOT_PATH=SAVING_PATH+'/nsnp{}_max{}_csnp{}_i{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
-        EVALUATION_PATH=EVALUATION_SAVINGPATH+'/nsnp{}_max{}_csnp{}_i{}.pkl'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+    PLOT_PATH=SAVING_PATH+'/gene_ind{}_i{}.png'.format(args.gene_ind,args.interaction)
+    EVALUATION_PATH=EVALUATION_SAVINGPATH+'/gene_ind{}_i{}.pkl'.format(args.gene_ind,args.interaction)
     plt.savefig(PLOT_PATH)
 
     save_file(EVALUATION_PATH,evaluation_dict)
@@ -529,42 +520,26 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)
+    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)
 
     os.makedirs(PATH, exist_ok=True)
-    if args.control_prevalence:
-        PATH_SAVE=PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 
-    else:
-        PATH_SAVE=PATH+'/nsnp{}_max{}_csnp{}_i{}.pt'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+
+    PATH_SAVE=PATH+'/gene_ind{}_i{}.pt'.format(args.gene_ind,args.interaction)
     
 
     min_loss=np.inf
-    if args.num_snp<=100:
-        #patience was 12
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.00001,factor=0.5,verbose=True)
-
-    elif 100<args.num_snp<=2000:  
-        # scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.000005,factor=0.8,verbose=True)
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=8, min_lr=0.00001,factor=0.7,verbose=True)
-
-    elif 500<args.num_snp<=2000:  
-        #patience was 10
-        # scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=8, min_lr=0.00001,factor=0.8,verbose=True)
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=8, min_lr=0.00001,factor=0.7,verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.00001,factor=0.5,verbose=True)
 
     for epoch in range(1, args.epochs + 1):
         train_loss=train(epoch,bag_class_weight_train,weight=True)
         val_loss=val()
         print("validation loss:", val_loss)
-        
-        if args.num_snp<=100:
-            scheduler.step(val_loss)
-        elif 100<args.num_snp<=2000:  
-            scheduler.step(val_loss)
 
-        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/".format(args.lr,args.model)+ str(args.gene_ind), exist_ok=True)
-        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}/'.format(args.lr,args.model)+ str(args.gene_ind)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        scheduler.step(val_loss)
+
+        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/".format(args.lr,args.model)+ str(args.gene_ind), exist_ok=True)
+        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)+'/gene_ind{}_i{}'.format(args.gene_ind,args.interaction))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
