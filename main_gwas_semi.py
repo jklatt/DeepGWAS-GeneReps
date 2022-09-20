@@ -265,7 +265,7 @@ def test(PATH):
     #     model = GatedAttention()
     # optimizer = optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
 
-    PATH_LOAD=PATH+'/gene_ind{}_i{}.pt'.format(args.gene_ind,args.interaction)
+    PATH_LOAD=PATH+'/gene_ind{}_i{}_snplength{}.pt'.format(args.gene_ind,args.interaction,args.selected_length)
 
     checkpoint = torch.load(PATH_LOAD)
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -499,10 +499,10 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)
+    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
 
@@ -520,12 +520,12 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)
+    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
 
     os.makedirs(PATH, exist_ok=True)
 
 
-    PATH_SAVE=PATH+'/gene_ind{}_i{}.pt'.format(args.gene_ind,args.interaction)
+    PATH_SAVE=PATH+'/gene_ind{}_i{}_snplength{}.pt'.format(args.gene_ind,args.interaction,args.selected_length)
     
 
     min_loss=np.inf
@@ -538,8 +538,8 @@ if __name__ == "__main__":
 
         scheduler.step(val_loss)
 
-        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/".format(args.lr,args.model)+ str(args.gene_ind), exist_ok=True)
-        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_alogpick/'.format(args.lr,args.model)+ str(args.gene_ind)+'/gene_ind{}_i{}'.format(args.gene_ind,args.interaction))
+        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/".format(args.lr,args.model,args.selected_length)+ str(args.gene_ind), exist_ok=True)
+        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)+'/gene_ind{}_i{}_snplength{}'.format(args.gene_ind,args.interaction,args.selected_length))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

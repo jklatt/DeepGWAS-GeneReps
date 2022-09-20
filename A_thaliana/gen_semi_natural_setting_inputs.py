@@ -18,7 +18,19 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     gene_present=present_df[gene]
     snp_identifier=list(range(selected_length))
     snp_type=np.random.randint(0,4,selected_length)
-    target_mutation_pos=random.sample(range(selected_length),3)
+    if selected_length==20:
+        target_mutation_pos=random.sample(range(selected_length),3)
+    elif selected_length==200 and gene==0:
+        target_mutation_pos=[114, 127, 189]
+    elif selected_length==200 and gene==1:
+        target_mutation_pos=[107, 110, 105]
+    elif selected_length==200 and gene==2:
+        target_mutation_pos=[78, 107, 169]
+    elif selected_length==200 and gene==3:
+        target_mutation_pos=[2, 4, 46]
+    elif selected_length==200 and gene==4:
+        target_mutation_pos=[159, 193, 196]
+
     print("the target mutation position is", target_mutation_pos)
 
     for sample in gene_present:

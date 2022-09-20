@@ -21,8 +21,7 @@ def extract_dicts(train_parameter:str, file,evaluation_dict, evaluation_scores_t
         evaluation_scores_true[train_parameter]['roc_auc_instance']=evaluation_dict['roc_auc_instance']
         evaluation_scores_true[train_parameter]['precision_instance']=evaluation_dict['precision_instance']
         evaluation_scores_true[train_parameter]['recall_instance']=evaluation_dict['recall_instance']
-        evaluation_scores_true[train_parameter]['prc_avg_instance']=evaluation_dict['prc_avg_instance']
-
+        evaluation_scores_true[train_parameter]['prc_avg_instance']=evaluation_dict['prc_avg_instance'] 
 
     else:
         evaluation_scores_false[train_parameter]['fpr']=evaluation_dict['fpr_bag']
@@ -37,9 +36,7 @@ def extract_dicts(train_parameter:str, file,evaluation_dict, evaluation_scores_t
         evaluation_scores_false[train_parameter]['roc_auc_instance']=evaluation_dict['roc_auc_instance']
         evaluation_scores_false[train_parameter]['precision_instance']=evaluation_dict['precision_instance']
         evaluation_scores_false[train_parameter]['recall_instance']=evaluation_dict['recall_instance']
-        evaluation_scores_false[train_parameter]['prc_avg_instance']=evaluation_dict['prc_avg_instance']
-
-
+        evaluation_scores_false[train_parameter]['prc_avg_instance']=evaluation_dict['prc_avg_instance'] 
 
     return evaluation_scores_true, evaluation_scores_false
 

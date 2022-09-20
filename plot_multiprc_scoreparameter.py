@@ -5,7 +5,7 @@ import pickle
 import os
 import numpy as np
 #change the seeds accodringly!!!
-ploting_snp="200"
+ploting_snp="20"
 def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter, path):
     # extracting max_present dictionary
     evaluation_scores_true={}
@@ -17,7 +17,6 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, vari
 
     #variating max_present
         for file in filenames:
-            
             if variating_parameter=="prevalence":
                 splited_name=file.split('_')
                 train_parameter=splited_name[4].split('.p')[0]
@@ -71,8 +70,6 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, vari
         for t in range(len(true_prevalence)):
             evaluation_scores_true_avg[true_prevalence[t]]['prc_auc_mean']=evaluation_scores_true_avg[true_prevalence[t]]['prc_auc_mean']/float(true_prevalence[t][10:])
             evaluation_scores_false_avg[false_prevalence[t]]['prc_auc_mean']=evaluation_scores_false_avg[false_prevalence[t]]['prc_auc_mean']/float(false_prevalence[t][10:])
-
-        
 
 
     return evaluation_scores_true_avg, evaluation_scores_false_avg 
@@ -130,7 +127,7 @@ elif ploting_snp=="150":
 
 
 
-path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_fixedSNPtype/"
+path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_alogpick/"
 
 reference_setting={}
 calculating_avg={}
@@ -472,7 +469,7 @@ elif ploting_snp=="150":
     criteriapre2="csnp3" 
     criteriapre3="max0.9"
 
-saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_attention_weightedfixed_snptypefixed/"
+saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_attention_weightedfixed_algopick_snplength20/"
 os.makedirs(saving_path,exist_ok=True)
 
 ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base,criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,saving_path)
