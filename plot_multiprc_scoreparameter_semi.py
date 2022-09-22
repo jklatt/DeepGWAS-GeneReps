@@ -3,8 +3,18 @@ import pickle
 import os
 import numpy as np
 
-path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_alogpick/"
-gene_name_list=['AT2G14030', 'AT3G26240', 'AT3G26260', 'AT3G31005', 'AT5G45060']
+#snp20
+# path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_alogpick/"
+# gene_name_list=['AT5G48440','AT3G52970', 'AT2G36570','AT4G10350', 'AT2G16676']
+
+#snp200
+# path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_snplength200_alogpick/"
+# gene_name_list=['AT2G14030', 'AT3G26240', 'AT3G26260', 'AT3G31005', 'AT5G45060']
+
+#snp greater than 500
+path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_snplength500_alogpick/"
+gene_name_list=['AT1G43060', 'AT1G58602', 'AT4G19490', 'AT5G24740', 'AT5G32690']
+
 genes=range(5)
 evaluation_scores_true={}
 evaluation_scores_false={}
@@ -63,7 +73,7 @@ axis[1].legend(loc = 'lower left')
 axis[1].set_xlim([0, 1])
 axis[1].set_ylim([0, 1])
 
-SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength20_iTrue.png"
+SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength500greaterthan_iTrue.png"
 plt.savefig(SAVING_PATH)
 
 figure, axis = plt.subplots(1, 2, figsize=(7, 7))
@@ -89,7 +99,7 @@ axis[1].set_xlim([0, 1])
 axis[1].set_ylim([0, 1])
 
 
-SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength20_iFalse.png"
+SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength500greaterthan_iFalse.png"
 plt.savefig(SAVING_PATH)
 
 

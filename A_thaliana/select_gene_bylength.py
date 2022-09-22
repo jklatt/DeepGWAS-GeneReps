@@ -18,7 +18,7 @@ gene_persample = dict()
 pos = bim['pos'].values
 chromosome = bim['chrom'].values
 
-selected_length=50#the varible of selected gene length
+selected_length=20#the varible of selected gene length
 wanted_present_num=2029*0.2
 selected_gene=[]
 for i in range(len(df)):
@@ -62,6 +62,10 @@ for gene in select_5_genes:
                 gene_by_sample_=np.matrix.transpose(gene_by_sample_)
                 gene_by_sample_=gene_by_sample_/2
 
+                # total_present=np.sum(gene_by_sample_, 1)
+                # avg_present_per=np.mean(total_present)/selected_length
+                # print("the present percentage is", avg_present_per)
+
                 selected_SNP_position=gene_by_sample_[:,selected_snps]
                 count_present=np.sum(selected_SNP_position, 1)
                 all_present_num=np.count_nonzero(count_present==3)
@@ -81,9 +85,13 @@ select_5_genes_names=random.sample(selected_gene_names,5)
 print("selected gene names", pd.DataFrame(select_5_genes_names))
 selectedgene_index=[i for i, names in enumerate(selected_gene_names) if names in select_5_genes_names]
 selectedsamples=[ sample for i, sample in enumerate(selected_gene_samples) if i in selectedgene_index]
+for sample in selectedsamples:
+    total_present=np.sum(sample, 1)
+    avg_present_per=np.mean(total_present)/selected_length
+    print("the present percentage is", avg_present_per)
 
 # print(selected_gene_samples)
-save_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(selected_length),selectedsamples)
+# save_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(selected_length),selectedsamples)
 
 
 #seed 2 genes

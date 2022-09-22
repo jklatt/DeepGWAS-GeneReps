@@ -16,10 +16,14 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     single_labels_list=[]
     bag_label_list=[]
     gene_present=present_df[gene]
-    snp_identifier=list(range(selected_length))
-    snp_type=np.random.randint(0,4,selected_length)
+    actually_length=len(gene_present[0])
+
+    snp_identifier=list(range(actually_length))
+    snp_type=np.random.randint(0,4,actually_length)
+
     if selected_length==20:
         target_mutation_pos=random.sample(range(selected_length),3)
+        
     elif selected_length==200 and gene==0:
         target_mutation_pos=[114, 127, 189]
     elif selected_length==200 and gene==1:
@@ -31,8 +35,19 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     elif selected_length==200 and gene==4:
         target_mutation_pos=[159, 193, 196]
 
-    print("the target mutation position is", target_mutation_pos)
+    elif selected_length==500 and gene==0:
+        target_mutation_pos=[198, 201, 191]
+    elif selected_length==500 and gene==1:
+        target_mutation_pos=[433, 485, 521]
+    elif selected_length==500 and gene==2:
+        target_mutation_pos=[291, 318, 322]
+    elif selected_length==500 and gene==3:
+        target_mutation_pos=[171, 173, 247]
+    elif selected_length==500 and gene==4:
+        target_mutation_pos=[55, 414, 358]
 
+    print("the target mutation position is", target_mutation_pos)
+    
     for sample in gene_present:
         single_labels=[]
         data=[]
@@ -54,7 +69,7 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
             bag_label=any(bag_label_check)
         bag_label_list.append(bag_label)
 
-    # print("The prevalence of the data is",bag_label_list)
+    print("The prevalence of the data is",np.sum(bag_label_list)/len(bag_label_list))
 
     return bag_label_list, data_list, single_labels_list
 

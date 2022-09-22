@@ -39,8 +39,8 @@ parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume 
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
-parser.add_argument('--selected_length',type=int,default=20, help='selected length from nature data')
-parser.add_argument('--gene_ind',type=int,default=0, help='selected gene index')
+parser.add_argument('--selected_length',type=int,default=500, help='selected length from nature data')
+parser.add_argument('--gene_ind',type=int,default=4, help='selected gene index')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
@@ -64,7 +64,9 @@ if args.interaction==1:
 else:
     args.interaction=False
 
-present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(args.selected_length))
+# present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(args.selected_length))
+present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength500greaterthan_alogPICK.pkl".format(args.selected_length))
+
 bag_label_list, data_list, single_labels_list=gene_data_gen(args.gene_ind,present_df, args.selected_length, args.interaction)
 data_list_train, valtest_data, bag_label_list_train, valtest_baglabel, label_list_train,valtest_label=train_test_split(data_list,bag_label_list, 
                                                                                                             single_labels_list, test_size=1/3, random_state=1,stratify=bag_label_list)

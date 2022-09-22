@@ -19,14 +19,20 @@ pos = bim['pos'].values
 chromosome = bim['chrom'].values
 
 selected_length=200#the varible of selected gene length
+# selected_length=200#the varible of selected gene length
 wanted_present_num=2029*0.2
 selected_gene=[]
+selected_gene_length=[]
 for i in range(len(df)):
+    # if len(df[list(df.keys())[i]])>selected_length:
     if len(df[list(df.keys())[i]])==selected_length:
         selected_gene.append(list(df.keys())[i])
+        selected_gene_length.append(len(df[list(df.keys())[i]]))
+
 
 print("number of gene with length", selected_length, len(selected_gene))
 print("the name of the genes", selected_gene)
+print("the selected gene length is", selected_gene_length)
 selectedsamples=[]
 bed_mat=np.matrix.transpose(bed_mat)
 
@@ -74,11 +80,19 @@ for gene in selected_gene:
                 top_2_snp=sort_index(count_present_2)[:3]
                 print("the next next most present snp is", top_2_snp)
 
+for sample in selectedsamples:
+    total_present=np.sum(sample, 1)
+    avg_present_per=np.mean(total_present)/selected_length
+    print("the present percentage is", avg_present_per)
+
 
 # save_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(selected_length),selectedsamples)
+# save_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}greaterthan_alogPICK.pkl".format(selected_length),selectedsamples)
 
 
-
+#greater than 500
+#  ['AT1G43060', 'AT1G58602', 'AT4G19490', 'AT5G24740', 'AT5G32690']
+#with length  [502, 749, 527, 575, 1215]
 
 
 
