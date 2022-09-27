@@ -25,5 +25,5 @@ print(pd.DataFrame(num_snp_vs_present_avg.groupby('num_snp')['present'].max()))
 
 out_file=num_snp_vs_present_avg.groupby('num_snp')['present'].max()
 # out_file=1-out_file
-out_file.to_csv('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/num_snp_by_present_maf0.05_max_bed_reader.csv')
+# out_file.to_csv('/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/num_snp_by_present_maf0.05_max_bed_reader.csv')
 

@@ -42,7 +42,7 @@ parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--model', type=str, default='set_transformer', help='Choose b/w attention and gated_attention')
+parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
 parser.add_argument('-nsnp','--num_snp',type=int, default=15,help='number of SNP in elvery sample')
 parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
@@ -77,12 +77,12 @@ else:
 
 if args.control_prevalence:
     # prevalence as parameter sample generation
-    data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test,val_data_list,val_label_list, val_bag_label_list=generate_samples_prev(gene_length=args.num_snp, 
+    data_list_train, bag_label_list_train, label_list_train, data_list_test, bag_label_list_test,label_list_test,val_data_list,val_label_list, val_bag_label_list,target_mutation=generate_samples_prev(gene_length=args.num_snp, 
     max_present=int(args.max_present*args.num_snp) ,num_casual_snp=args.num_casual_snp, num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test, prevalence=args.prevalence, interaction=args.interaction,seed=args.seed, non_causal=args.non_causal)
 
 else:
     # without controling prevalence sample generation
-    data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test,val_data_list,val_bag_label_list,val_label_list=generate_samples(gene_length=args.num_snp,
+    data_list_train, bag_label_list_train, label_list_train, data_list_test,bag_label_list_test,label_list_test,val_data_list,val_bag_label_list,val_label_list,target_mutation=generate_samples(gene_length=args.num_snp,
     max_present=int(args.max_present*args.num_snp),num_casual_snp=args.num_casual_snp,num_genes_train=args.num_bags_train,num_genes_test=args.num_bags_test,interaction=args.interaction,seed=args.seed, non_causal=args.non_causal)
 
 
@@ -387,6 +387,29 @@ def test(PATH):
         print("The averaging attention weight by position ALL bags", pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
         print("------------------------------------------------------------------------")
 
+        SAVING_INSTANCE_PATH=os.getcwd()+"/instance_level_results"
+        avg_prediciton_truebag_label=[]
+        avg_prediciton_allbag_label=[]
+        avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
+        avg_predict_all_bags=pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
+        for i in range(15):
+            if avg_predict_true_bags.index[i] in target_mutation:
+                avg_prediciton_truebag_label.append(True)
+            else:
+                avg_prediciton_truebag_label.append(False)
+
+            if avg_predict_all_bags.index[i] in target_mutation:
+                avg_prediciton_allbag_label.append(True)
+            else:
+                avg_prediciton_allbag_label.append(False)
+
+        avg_predict_true_bags['label']=avg_prediciton_truebag_label
+        avg_predict_all_bags['label']=avg_prediciton_allbag_label
+        os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
+        save_file(SAVING_INSTANCE_PATH+"/truebags_nsnp{}_max{}_csnp{}_i{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction),avg_predict_true_bags)
+        save_file(SAVING_INSTANCE_PATH+"/allbags_nsnp{}_max{}_csnp{}_i{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction),avg_predict_all_bags)
+
+
         if total_count==0:
             print('The estimated probability of the right largest attention is',rightattention_count/(total_count+0.000000000001))
         else:
@@ -435,6 +458,7 @@ def test(PATH):
         evaluation_dict['precision_bag']=precision
         evaluation_dict['recall_bag']=recall
         evaluation_dict['prc_avg_bag']=prc_avg
+
 
     else:
         # saving evaluation scores
@@ -519,10 +543,10 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype/'.format(args.lr,args.model)+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype/'.format(args.lr,args.model)+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -546,7 +570,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype/'.format(args.lr,args.model)+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -580,8 +604,8 @@ if __name__ == "__main__":
         elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype/".format(args.lr,args.model)+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype/'.format(args.lr,args.model)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/".format(args.lr,args.model)+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

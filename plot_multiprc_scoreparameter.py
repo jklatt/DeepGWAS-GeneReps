@@ -167,8 +167,7 @@ for seed in selected_seed:
                 new_a1_y = np.interp(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
                 new_a2_y = np.interp(new_a2_x, np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
                 calculating_avg[seed]["interaction_true"]['precision']=np.flip(new_a2_y)
-                calculating_avg[seed]["interaction_true"]['recall']=new_a1_y 
-
+                calculating_avg[seed]["interaction_true"]['recall']=new_a1_y
                 reference_setting[seed]["interaction_true"]['precision']=standard_seting['precision_bag']
                 reference_setting[seed]["interaction_true"]['recall']=standard_seting['recall_bag']
                 reference_setting[seed]["interaction_true"]['prc_avg']=standard_seting['prc_avg_bag']
@@ -183,10 +182,10 @@ for seed in selected_seed:
                 new_a2_y = np.interp(new_a2_x, np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
                 calculating_avg[seed]["interaction_false"]['precision']=np.flip(new_a2_y)
                 calculating_avg[seed]["interaction_false"]['recall']=new_a1_y 
-
                 reference_setting[seed]["interaction_false"]['precision']=standard_seting['precision_bag']
                 reference_setting[seed]["interaction_false"]['recall']=standard_seting['recall_bag']
                 reference_setting[seed]["interaction_false"]['prc_avg']=standard_seting['prc_avg_bag']
+                
 avg_pre_true=[]
 avg_recall_true=[]
 avg_pre_false=[]

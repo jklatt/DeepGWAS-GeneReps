@@ -350,7 +350,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
 
     
-    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list
+    return train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list, sorted(target_mutation_pos)
 
 
 # gene_length=10
