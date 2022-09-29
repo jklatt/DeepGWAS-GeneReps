@@ -64,8 +64,10 @@ if args.interaction==1:
 else:
     args.interaction=False
 
-# present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(args.selected_length))
-present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength500greaterthan_alogPICK.pkl".format(args.selected_length))
+if args.selected_length<500:
+    present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(args.selected_length))
+else:
+    present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength500greaterthan_alogPICK.pkl")
 
 bag_label_list, data_list, single_labels_list=gene_data_gen(args.gene_ind,present_df, args.selected_length, args.interaction)
 data_list_train, valtest_data, bag_label_list_train, valtest_baglabel, label_list_train,valtest_label=train_test_split(data_list,bag_label_list, 
@@ -501,10 +503,10 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
+    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
 
@@ -522,7 +524,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
+    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
 
     os.makedirs(PATH, exist_ok=True)
 
@@ -540,8 +542,8 @@ if __name__ == "__main__":
 
         scheduler.step(val_loss)
 
-        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/".format(args.lr,args.model,args.selected_length)+ str(args.gene_ind), exist_ok=True)
-        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)+'/gene_ind{}_i{}_snplength{}'.format(args.gene_ind,args.interaction,args.selected_length))
+        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/".format(args.lr,args.model,args.selected_length)+ str(args.gene_ind), exist_ok=True)
+        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)+'/gene_ind{}_i{}_snplength{}'.format(args.gene_ind,args.interaction,args.selected_length))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)
