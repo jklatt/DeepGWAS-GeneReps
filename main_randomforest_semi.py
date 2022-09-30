@@ -17,10 +17,7 @@ from A_thaliana.gen_semi_natural_setting_inputs import gene_data_gen
 from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
-
 parser.add_argument('--epochs', type=int, default=500,)
-parser.add_argument('--lr', type=float, default=0.0005,
-                    help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
 parser.add_argument('--num_bags_train', type=int, default=800, 
@@ -37,13 +34,11 @@ parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if us
 parser.add_argument('--selected_length',type=int,default=500, help='selected length from nature data')
 parser.add_argument('--gene_ind',type=int,default=4, help='selected gene index')
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
-
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
 
 torch.manual_seed(args.seed)
-
 np.random.seed(args.seed)
 random.seed(args.seed)
 
@@ -73,8 +68,6 @@ data_list_train, valtest_data, bag_label_list_train, valtest_baglabel, label_lis
 data_list_test, val_data_list, bag_label_list_test, val_bag_label_list, label_list_test, val_label_list=train_test_split(valtest_data, valtest_baglabel, valtest_label, test_size=0.5, random_state=1, stratify= valtest_baglabel)                                                          
 
 
-
-
 bag_class_weight_train=get_weight(bag_label_list_train)
 bag_class_weight_test=get_weight(bag_label_list_test)
 bag_class_weight_val=get_weight(val_bag_label_list)
@@ -83,8 +76,6 @@ if args.cuda:
     bag_class_weight_train=torch.from_numpy(bag_class_weight_train)
     bag_class_weight_val=get_weight(val_bag_label_list)
     bag_class_weight_train.cuda()
-
-
 overampling=args.oversampling
 
 if (1/bag_class_weight_train[0]<0.5) & (overampling==True):
@@ -116,35 +107,27 @@ elif 1/bag_class_weight_train[0]<0.5:
     data_list_train=[data_list_train[j] for j in keep_ind]
     bag_label_list_train=[bag_label_list_train[j] for j in keep_ind]
     label_list_train=[label_list_train[j] for j in keep_ind]
-
     bag_class_weight_train=get_weight(bag_label_list_train)
 
 def extract_moments(data_list_train):
     data_out=[]
     for data in data_list_train: 
-        m1=np.mean(data,axis=0)[0][2]
-        m2=np.std(data,axis=0)[0][2]**2
-        m3=skew(data,axis=0)[0][2]
-        m4=kurtosis(data,axis=0)[0][2]
-
-        # m5=np.mean(data,axis=0)[0][1]
-        # m6=np.std(data,axis=0)[0][1]**2
-        # m7=skew(data,axis=0)[0][1]
-        # m8=kurtosis(data,axis=0)[0][1]
-        # data_out.append([m1,m2,m3,m4,m5,m6,m7,m8])
+        m1=np.mean(data,axis=0)[2]
+        m2=np.std(data,axis=0)[2]**2
+        m3=skew(data,axis=0)[2]
+        m4=kurtosis(data,axis=0)[2]
         data_out.append([m1,m2,m3,m4])
     return data_out
-
 data_moment_train=extract_moments(data_list_train)
 data_moment_valid=extract_moments(val_data_list)
 data_moment_test=extract_moments(data_list_test)
 
 #fiting random forest
-clf = RandomForestClassifier(n_estimators=400,max_depth=50, random_state=args.seed)
-clf.fit(data_moment_train, bag_label_list_train)
+# clf = RandomForestClassifier(n_estimators=200,random_state=args.seed)
+# clf.fit(data_moment_train, bag_label_list_train)
 
 #fiting logistic regression
-# clf = LogisticRegression(random_state=0).fit(data_moment_train, bag_label_list_train)
+clf = LogisticRegression(random_state=0).fit(data_moment_train, bag_label_list_train)
 
 predictions=clf.predict(data_moment_test)
 print(confusion_matrix(bag_label_list_test,predictions))
@@ -157,9 +140,9 @@ roc_auc = auc(fpr, tpr)
 precision, recall, thresholds_prc = precision_recall_curve(bag_label_list_test, predictions)
 prc_avg = average_precision_score(bag_label_list_test, predictions)
 
-SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi/{}/".format(args.seed)
+SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi/{}/".format(args.gene_ind)
 os.makedirs(SAVING_METRIC_PATH, exist_ok=True)
-EVALUATION_PATH=SAVING_METRIC_PATH+'evaluation_score_nsnp{}_max{}_csnp{}_i{}.pkl'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+EVALUATION_PATH=SAVING_METRIC_PATH+'evaluation_score_selectedlength{}_i{}.pkl'.format(args.selected_length,args.interaction)
 evaluation_dict={}
 evaluation_dict['fpr']=fpr
 evaluation_dict['tpr']=tpr
@@ -170,7 +153,7 @@ evaluation_dict['prc_avg']=prc_avg
 save_file(EVALUATION_PATH,evaluation_dict)
 
 figure, axis = plt.subplots(1, 2, figsize=(7, 7))
-figure.suptitle('nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence), fontsize=16)
+figure.suptitle('selectedlength{}_i{}.png'.format(args.selected_length,args.interaction), fontsize=16)
 
 axis[0].set_title('Bag level ROC')
 axis[0].plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
@@ -191,14 +174,17 @@ axis[1].set_ylim([0, 1])
 axis[1].set_xlabel('Recall')
 axis[1].set_ylabel('Precision')
 axis[1].axhline(y=0.35, color='grey', linestyle='dotted')
-
 plt.tight_layout()
 
-SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_fourmoments_semi/{}/".format(args.seed)
+SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_fourmoments_semi/{}/".format(args.gene_ind)
 os.makedirs(SAVING_PATH, exist_ok=True)
 
-PLOT_PATH=SAVING_PATH+'nsnp{}_max{}_csnp{}_i{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+PLOT_PATH=SAVING_PATH+'selectedlength{}_i{}.png'.format(args.selected_length,args.interaction)
 plt.savefig(PLOT_PATH)
+
+
+
+
 
 
 

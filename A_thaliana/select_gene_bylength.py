@@ -38,6 +38,10 @@ print("number of gene with length", selected_length, len(select_5_genes))
 
 # chromo=range(1,6)
 
+# snp20 by algo
+# select_5_genes=['AT4G02310', 'AT1G75080', 'AT2G45630', 'AT5G47960', 'AT1G64640']
+
+
 gene_by_sample_prop_list=[]
 snp_index_list=[]
 selected_gene_samples=[]
@@ -84,10 +88,10 @@ random.seed(50)
 select_5_genes_names=random.sample(selected_gene_names,5)
 print("selected gene names", pd.DataFrame(select_5_genes_names))
 selectedgene_index=[i for i, names in enumerate(selected_gene_names) if names in select_5_genes_names]
-selectedsamples=[ sample for i, sample in enumerate(selected_gene_samples) if i in selectedgene_index]
+selectedsamples=[sample for i, sample in enumerate(selected_gene_samples) if i in selectedgene_index]
 for sample in selectedsamples:
     total_present=np.sum(sample, 1)
-    avg_present_per=np.mean(total_present)/selected_length
+    avg_present_per=np.max(total_present)/selected_length
     print("the present percentage is", avg_present_per)
 
 # print(selected_gene_samples)
