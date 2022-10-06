@@ -11,7 +11,7 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 from toy_gwas_loader import generate_samples, generate_samples_prev
-from model_gwas import Attention, GatedAttention, SetTransformer
+from model_gwas import Attention, GatedAttention, SetTransformer, Attention_onlypresent, GatedAttention_onlypresent
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
@@ -42,7 +42,7 @@ parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
+parser.add_argument('--model', type=str, default='attention_onlypresent', help='Choose b/w attention and gated_attention')
 parser.add_argument('-nsnp','--num_snp',type=int, default=15,help='number of SNP in elvery sample')
 parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
@@ -52,6 +52,7 @@ parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if us
 parser.add_argument('-pre','--prevalence',type=float,default=0.1, help='the ratio of true bag and false bag in generated samples')
 parser.add_argument('-cprgevalene','--control_prevalence',type=bool,default=True, help='if we control prevalence when generating samples')
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
+parser.add_argument('--onlypresent',type=int,default=1, help='only present indentifier model')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
@@ -74,6 +75,12 @@ if args.interaction==1:
     args.interaction=True
 else:
     args.interaction=False
+
+if args.onlypresent==0:
+    args.onlypresent=False
+else:
+    args.onlypresent=True
+
 
 if args.control_prevalence:
     # prevalence as parameter sample generation
@@ -134,6 +141,7 @@ elif 1/bag_class_weight_train[0]<0.5:
 
 
 
+
 train_data=TensorDataset(torch.tensor(data_list_train),torch.tensor(bag_label_list_train),torch.tensor(label_list_train))
 train_loader =DataLoader(train_data,batch_size=1, shuffle=True)
 
@@ -156,6 +164,10 @@ elif args.model=='gated_attention':
     model = GatedAttention()
 elif args.model=='set_transformer':
     model = SetTransformer()
+elif args.model=='attention_onlypresent':
+    model=Attention_onlypresent()
+elif args.model=='gated_attention_onlypresent':
+    model=GatedAttention_onlypresent()
     
 if args.cuda:
     model.cuda()
@@ -170,12 +182,19 @@ def train(epoch,bag_class_weight_train, weight):
     
     for batch_idx, (data, bag_label, label) in enumerate(train_loader):
         # bag_label = label[0]
+        if args.onlypresent:
+            data=data.squeeze(0)
+            data=[[dat[0][0]] for dat in data if dat[0][2]==1]
+            data=torch.tensor(data)
+
         data=data.type(torch.FloatTensor)
         if args.cuda:
             data, bag_label = data.cuda(), bag_label.cuda()
             # print("data is on", data.get_device())
             # print("bag_label is on", bag_label.get_device())
         data, bag_label = Variable(data), Variable(bag_label)
+        
+
 
         # print('\ndata: ',data)
         # print('\nlabel:',bag_label)
@@ -212,8 +231,6 @@ def train(epoch,bag_class_weight_train, weight):
                 train_loss += loss
 
 
-            
-
         error, _ = model.calculate_classification_error(data, bag_label)
         train_error += error
 
@@ -241,6 +258,11 @@ def val():
     val_loss = 0.
     val_error = 0.
     for batch_idx, (data, bag_label, label) in enumerate(validation_loader):
+        if args.onlypresent:
+            data=data.squeeze(0)
+            data=[[dat[0][0]] for dat in data if dat[0][2]==1]
+            data=torch.tensor(data)
+
         data=data.type(torch.FloatTensor)
 
         if args.cuda:
@@ -314,6 +336,11 @@ def test(PATH):
 
 
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
+        if args.onlypresent:
+            data=data.squeeze(0)
+            data=[[dat[0][0]] for dat in data if dat[0][2]==1]
+            data=torch.tensor(data)
+
         # bag_label = label[0]
         instance_labels = label
         data=data.type(torch.FloatTensor)
@@ -343,7 +370,7 @@ def test(PATH):
         else:
             y_prob_list.append(y_prob.cpu().data)
         
-        if args.model!="set_transformer":
+        if args.model!="set_transformer" and args.onlypresent==False:
             if predicted_label.cpu().data.numpy()[0][0]==1:
                 attention_array=attention_weights.cpu().data.numpy()[0]
 
@@ -387,7 +414,8 @@ def test(PATH):
         print("The averaging attention weight by position ALL bags", pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
         print("------------------------------------------------------------------------")
 
-        SAVING_INSTANCE_PATH=os.getcwd()+"/instance_level_results"
+
+        SAVING_INSTANCE_PATH=os.getcwd()+"/instance_level_results_lr{}_{}_/{}/".format(args.lr, args.model, args.seed)
         avg_prediciton_truebag_label=[]
         avg_prediciton_allbag_label=[]
         avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
@@ -406,8 +434,8 @@ def test(PATH):
         avg_predict_true_bags['label']=avg_prediciton_truebag_label
         avg_predict_all_bags['label']=avg_prediciton_allbag_label
         os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
-        save_file(SAVING_INSTANCE_PATH+"/truebags_nsnp{}_max{}_csnp{}_i{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction),avg_predict_true_bags)
-        save_file(SAVING_INSTANCE_PATH+"/allbags_nsnp{}_max{}_csnp{}_i{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction),avg_predict_all_bags)
+        save_file(SAVING_INSTANCE_PATH+"/truebags_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence),avg_predict_true_bags)
+        save_file(SAVING_INSTANCE_PATH+"/allbags_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence),avg_predict_all_bags)
 
 
         if total_count==0:
@@ -431,7 +459,7 @@ def test(PATH):
     precision, recall, thresholds_prc = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(y_prob_list))
     prc_avg = average_precision_score(np.concatenate(true_label_list),np.concatenate(y_prob_list))
 
-    if args.model!="set_transformer":
+    if args.model!="set_transformer" and args.onlypresent==False:
         # Matrics and plots instance level
         instance_level_score=np.concatenate(attention_array_list)
         instance_level_truth=np.concatenate(single_labels_list)
@@ -471,7 +499,7 @@ def test(PATH):
         evaluation_dict['prc_avg_bag']=prc_avg
         
    
-    if args.model!="set_transformer":
+    if args.model!="set_transformer" and args.onlypresent==False:
         figure, axis = plt.subplots(2, 2, figsize=(7, 7))
         figure.suptitle('nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence), fontsize=16)
 
@@ -543,10 +571,10 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
@@ -570,7 +598,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -604,8 +632,8 @@ if __name__ == "__main__":
         elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/".format(args.lr,args.model)+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_withinstance/'.format(args.lr,args.model)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/".format(args.lr,args.model,args.onlypresent)+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

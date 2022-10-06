@@ -3,18 +3,43 @@ import pickle
 import os
 import numpy as np
 
-ploting_length=200
+ploting_length=20
+model="gated_attention_onlypresent"
 if ploting_length==20:
-    #snp20
-    path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_alogpick/"
+    if model=="attention":
+        #snp20
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_snplength20_alogpick_withinstance/"
+    elif model=="gated_attention":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_snplength20_alogpick_withinstance/"
+    elif model=="attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_snplength20_alogpick_withinstance/"
+    elif model=="gated_attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength20_alogpick_withinstance/"
     gene_name_list=['AT5G48440','AT3G52970', 'AT2G36570','AT4G10350', 'AT2G16676']
+
+
 elif ploting_length==200:
-    #snp200
-    path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_snplength200_alogpick/"
+    if model=="attention":
+        #snp200
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_snplength200_alogpick_withinstance/"
+    elif model=="gated_attention":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_snplength200_alogpick_withinstance/"      
+    elif model=="attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_snplength200_alogpick_withinstance/"
+    elif model=="gated_attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength200_alogpick_withinstance/"
     gene_name_list=['AT2G14030', 'AT3G26240', 'AT3G26260', 'AT3G31005', 'AT5G45060']
+
 elif ploting_length==500:
-    #snp greater than 500
-    path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_snplength500_alogpick/"
+    if model=="attention":
+        #snp greater than 500
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_snplength500_alogpick_withinstance/"
+    elif model=="gated_attention":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_snplength500_alogpick_withinstance/"
+    elif model=="attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_snplength500_alogpick_withinstance/"
+    elif model=="gated_attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength500_alogpick_withinstance/"
     gene_name_list=['AT1G43060', 'AT1G58602', 'AT4G19490', 'AT5G24740', 'AT5G32690']
 
 
@@ -53,14 +78,41 @@ for gene in genes:
             evaluation_scores_false[gene_name]['recall']=evaluation_dict['recall_bag']
 
 
+def forward_filling(new_list1, list1, list2):
+    filled_list1=[[]]*len(new_list1)
+    compared_ind=0
+    # filled_list1[0]=list2[0]
+    for i in range(0,len(new_list1)):
+        greater_list=list1>new_list1[i]
+        greater_ind=[i for i, x in enumerate(greater_list) if x]
+        if len(greater_ind)>0:
+            if greater_ind[0]>=1 :
+                filled_list1[i]=list2[greater_ind[0]-1]
+            else:
+                filled_list1[i]=list2[0]
+        else:
+            filled_list1[i]=list2[-1]
+    return filled_list1
+
+
 def interporating(evaluation_scores_true, gene,variable1, variable2):
-    min_pre,max_pre=min(evaluation_scores_true[gene][variable1]), max(evaluation_scores_true[gene][variable1])
-    min_recall,max_recall=min(evaluation_scores_true[gene][variable2]), max(evaluation_scores_true[gene][variable2])
-    new_a1_x = np.linspace(min_pre, max_pre, 50)
-    new_a2_x = np.linspace(min_recall, max_recall,50)
-    new_a1_y = np.interp(new_a1_x, evaluation_scores_true[gene][variable1], evaluation_scores_true[gene][variable2])
-    new_a2_y = np.interp(new_a2_x, np.flip(evaluation_scores_true[gene][variable2]),np.flip(evaluation_scores_true[gene][variable1]))
-    evaluation_scores_true[gene]['{}_inter'.format(variable1)]=np.flip(new_a2_y)
+    # min_pre,max_pre=min(evaluation_scores_true[gene][variable1]), max(evaluation_scores_true[gene][variable1])
+    # min_recall,max_recall=min(evaluation_scores_true[gene][variable2]), max(evaluation_scores_true[gene][variable2])
+    new_a1_x = np.linspace(evaluation_scores_true[gene][variable1][0], evaluation_scores_true[gene][variable1][-1], 1000)
+    new_a2_x = np.linspace(evaluation_scores_true[gene][variable2][0], evaluation_scores_true[gene][variable2][-1],1000)
+    # print(evaluation_scores_true[gene][variable1][0],evaluation_scores_true[gene][variable1][-1])
+    # print(evaluation_scores_true[gene][variable2][0],evaluation_scores_true[gene][variable2][-1])
+
+    new_a1_y = forward_filling(new_a1_x,evaluation_scores_true[gene][variable1], evaluation_scores_true[gene][variable2])
+
+    if evaluation_scores_true[gene][variable2][0]-evaluation_scores_true[gene][variable2][-1]>0:
+        new_a2_y = forward_filling(np.flip(new_a2_x), np.flip(evaluation_scores_true[gene][variable2]),np.flip(evaluation_scores_true[gene][variable1]))
+        evaluation_scores_true[gene]['{}_inter'.format(variable1)]=np.flip(new_a2_y)
+        
+    else:
+        new_a2_y = forward_filling(new_a2_x, evaluation_scores_true[gene][variable2], evaluation_scores_true[gene][variable1])
+        evaluation_scores_true[gene]['{}_inter'.format(variable1)]=new_a2_y
+
     evaluation_scores_true[gene]['{}_inter'.format(variable2)]=new_a1_y
     return evaluation_scores_true
 
@@ -68,6 +120,7 @@ def interporating(evaluation_scores_true, gene,variable1, variable2):
 for gene in gene_name_list:
     evaluation_scores_true=interporating(evaluation_scores_true, gene,'precision','recall') 
     evaluation_scores_true=interporating(evaluation_scores_true, gene,'fpr', 'tpr')
+
     evaluation_scores_false=interporating(evaluation_scores_false, gene,'precision','recall') 
     evaluation_scores_false=interporating(evaluation_scores_false, gene,'fpr', 'tpr')
 
@@ -145,7 +198,8 @@ axis[1].set_ylabel('Precision')
 axis[1].set_xlim([0, 1])
 axis[1].set_ylim([0, 1])
 
-SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_iTrue_test.png".format(str(ploting_length))
+os.makedirs("/home/zixshu/DeepGWAS/semi_simulation_setting_plots",exist_ok=True)
+SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_model{}_iTrue_test.png".format(str(ploting_length),model)
 plt.savefig(SAVING_PATH)
 
 figure, axis = plt.subplots(1, 2, figsize=(7, 7))
@@ -176,7 +230,7 @@ axis[1].set_xlim([0, 1])
 axis[1].set_ylim([0, 1])
 
 
-SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_iFalse_test.png".format(str(ploting_length))
+SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_model{}_iFalse_test.png".format(str(ploting_length), model)
 plt.savefig(SAVING_PATH)
 
 

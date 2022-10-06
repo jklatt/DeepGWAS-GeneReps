@@ -17,13 +17,8 @@ from A_thaliana.gen_semi_natural_setting_inputs import gene_data_gen
 from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
-parser.add_argument('--epochs', type=int, default=500,)
 parser.add_argument('--reg', type=float, default=10e-5,
                     help='weight decay')
-parser.add_argument('--num_bags_train', type=int, default=800, 
-                    help='number of bags in training set')
-parser.add_argument('--num_bags_test', type=int, default=200,
-                    help='number of bags in test set')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -31,9 +26,10 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
-parser.add_argument('--selected_length',type=int,default=500, help='selected length from nature data')
-parser.add_argument('--gene_ind',type=int,default=4, help='selected gene index')
+parser.add_argument('--selected_length',type=int,default=20, help='selected length from nature data')
+parser.add_argument('--gene_ind',type=int,default=3, help='selected gene index')
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
+parser.add_argument('--model',type=str,default="logistic", help='choosing the baseline model')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
@@ -109,38 +105,48 @@ elif 1/bag_class_weight_train[0]<0.5:
     label_list_train=[label_list_train[j] for j in keep_ind]
     bag_class_weight_train=get_weight(bag_label_list_train)
 
-def extract_moments(data_list_train):
+def extract_moments(data_list_train, bag_label):
     data_out=[]
-    for data in data_list_train: 
-        m1=np.mean(data,axis=0)[2]
-        m2=np.std(data,axis=0)[2]**2
-        m3=skew(data,axis=0)[2]
-        m4=kurtosis(data,axis=0)[2]
-        data_out.append([m1,m2,m3,m4])
-    return data_out
-data_moment_train=extract_moments(data_list_train)
-data_moment_valid=extract_moments(val_data_list)
-data_moment_test=extract_moments(data_list_test)
+    bag_out=[]
+    for i, data in enumerate(data_list_train): 
+        present_identifier=[dat[0] for dat in data if dat[2]==1]
+        m1=np.mean(present_identifier)
+        m2=np.std(present_identifier)**2
+        m3=skew(present_identifier)
+        m4=kurtosis(present_identifier)
+        if not np.isnan([m1,m2,m3,m4]).any():
+            data_out.append([m1,m2,m3,m4])
+            bag_out.append(bag_label[i])
+    return data_out, bag_out
 
-#fiting random forest
-# clf = RandomForestClassifier(n_estimators=200,random_state=args.seed)
-# clf.fit(data_moment_train, bag_label_list_train)
 
-#fiting logistic regression
-clf = LogisticRegression(random_state=0).fit(data_moment_train, bag_label_list_train)
+data_moment_train,bag_label_train=extract_moments(data_list_train,bag_label_list_train)
+data_moment_test,bag_label_test=extract_moments(data_list_test,bag_label_list_test)
+
+if args.model=="logistic":
+    #fiting logistic regression
+    clf = LogisticRegression(random_state=0).fit(data_moment_train, bag_label_train)
+    
+elif args.model=="random_forest":
+    #fiting random forest
+    clf = RandomForestClassifier(n_estimators=200,random_state=args.seed)
+    clf.fit(data_moment_train, bag_label_list_train)
+   
+
 
 predictions=clf.predict(data_moment_test)
-print(confusion_matrix(bag_label_list_test,predictions))
+prediction_prob=clf.predict_proba(data_moment_test)[::,1]
+print(confusion_matrix(bag_label_test,predictions))
 
 
 # Matrics and plots bag level
-fpr, tpr, threshold_roc=roc_curve(bag_label_list_test, predictions)
+fpr, tpr, threshold_roc=roc_curve(bag_label_test, prediction_prob)
 roc_auc = auc(fpr, tpr)
 
-precision, recall, thresholds_prc = precision_recall_curve(bag_label_list_test, predictions)
-prc_avg = average_precision_score(bag_label_list_test, predictions)
+precision, recall, thresholds_prc = precision_recall_curve(bag_label_test, prediction_prob)
+prc_avg = average_precision_score(bag_label_test, prediction_prob)
 
-SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi/{}/".format(args.gene_ind)
+SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_{}/{}/".format(args.model, args.gene_ind)
 os.makedirs(SAVING_METRIC_PATH, exist_ok=True)
 EVALUATION_PATH=SAVING_METRIC_PATH+'evaluation_score_selectedlength{}_i{}.pkl'.format(args.selected_length,args.interaction)
 evaluation_dict={}
@@ -176,7 +182,7 @@ axis[1].set_ylabel('Precision')
 axis[1].axhline(y=0.35, color='grey', linestyle='dotted')
 plt.tight_layout()
 
-SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_fourmoments_semi/{}/".format(args.gene_ind)
+SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_fourmoments_semi_{}/{}/".format(args.model, args.gene_ind)
 os.makedirs(SAVING_PATH, exist_ok=True)
 
 PLOT_PATH=SAVING_PATH+'selectedlength{}_i{}.png'.format(args.selected_length,args.interaction)

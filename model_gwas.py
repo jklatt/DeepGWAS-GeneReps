@@ -311,3 +311,168 @@ class SetTransformer(nn.Module):
         return error, Y_hat
 
         
+#### only present model
+class Attention_onlypresent(nn.Module):
+    def __init__(self):
+        super(Attention_onlypresent, self).__init__()
+        # self.L = 500
+        self.L = 500
+        self.D = 128
+        self.K = 1
+
+        self.feature_extractor_part1 = nn.Sequential(
+            #mlp as extrator
+            nn.Linear(1, 10),
+            nn.LeakyReLU(),#here changed to leakeyReLU
+            nn.MaxPool1d(2, stride=2),
+            nn.Linear(5, 20),
+
+            nn.LeakyReLU(),#here changed to leakeyReLU
+            
+            nn.MaxPool1d(2, stride=2)
+        )
+
+        self.feature_extractor_part2 = nn.Sequential(
+           
+            nn.Linear(10, self.L),
+            nn.LeakyReLU(),#here changed to leakeyReLU
+        )
+
+        self.attention = nn.Sequential(
+            nn.Linear(self.L, self.D),
+            nn.Tanh(),
+            nn.Linear(self.D, self.K)
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(self.L*self.K, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        # print(x.shape)
+        H = self.feature_extractor_part1(x)
+       
+        #mlp
+        H = H.view(-1, 10)
+        # print(H.shape)
+
+        H = self.feature_extractor_part2(H)  # NxL
+        # print(H.shape)
+
+        A = self.attention(H)  # NxK
+        # print(A.shape)
+        A = torch.transpose(A, 1, 0)  # KxN
+
+        # print(A.shape)
+        A = F.softmax(A, dim=1)  # softmax over N
+        # print(A.shape)
+
+        M = torch.mm(A, H)  # KxL
+        # print(M.shape)
+
+        Y_prob = self.classifier(M)
+        Y_hat = torch.ge(Y_prob, 0.5).float()
+
+        return Y_prob, Y_hat, A
+
+    # AUXILIARY METHODS
+    def calculate_classification_error(self, X, Y):
+        Y = Y.float()
+        _, Y_hat, _ = self.forward(X)
+        error = 1. - Y_hat.eq(Y).cpu().float().mean().data.item()
+
+        return error, Y_hat
+
+    def calculate_objective(self, X, Y):
+        Y = Y.float()
+        Y_prob, _, A = self.forward(X)
+        Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
+
+       
+        neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli
+        
+
+        return neg_log_likelihood, A
+
+
+class GatedAttention_onlypresent(nn.Module):
+    def __init__(self):
+        super(GatedAttention_onlypresent, self).__init__()
+        self.L = 500
+        self.D = 128
+        self.K = 1
+
+        self.feature_extractor_part1 = nn.Sequential(
+
+            nn.Linear(1, 10),# note: change to mlp now for the encoding part
+            nn.LeakyReLU(),
+            nn.MaxPool1d(2, stride=2),
+            nn.Linear(5, 20),
+            nn.LeakyReLU(),
+            nn.MaxPool1d(2, stride=2)
+        )
+
+        self.feature_extractor_part2 = nn.Sequential(
+            # nn.Linear(50 * 4 * 4, self.L),
+            # nn.ReLU(),
+            nn.Linear(10, self.L),
+            nn.ReLU(),
+        )
+
+        self.attention_V = nn.Sequential(
+            nn.Linear(self.L, self.D),
+            nn.Tanh()
+        )
+
+        self.attention_U = nn.Sequential(
+            nn.Linear(self.L, self.D),
+            nn.Sigmoid()
+        )
+
+        self.attention_weights = nn.Linear(self.D, self.K)
+
+        self.classifier = nn.Sequential(
+            nn.Linear(self.L*self.K, 1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        # x = x.type(torch.FloatTensor)#added type change
+
+        H = self.feature_extractor_part1(x)
+        H = H.view(-1, 10)
+        # H = H.view(-1, 50 * 4 * 4)
+        H = self.feature_extractor_part2(H)  # NxL
+
+        A_V = self.attention_V(H)  # NxD
+        A_U = self.attention_U(H)  # NxD
+        A = self.attention_weights(A_V * A_U) # element wise multiplication # NxK
+        A = torch.transpose(A, 1, 0)  # KxN
+        A = F.softmax(A, dim=1)  # softmax over N
+
+        M = torch.mm(A, H)  # KxL
+
+        Y_prob = self.classifier(M)
+        Y_hat = torch.ge(Y_prob, 0.5).float()
+
+        return Y_prob, Y_hat, A
+
+    # AUXILIARY METHODS
+    def calculate_classification_error(self, X, Y):
+        Y = Y.float()
+        _, Y_hat, _ = self.forward(X)
+        error = 1. - Y_hat.eq(Y).cpu().float().mean().item()
+
+        return error, Y_hat
+
+    def calculate_objective(self, X, Y):
+        Y = Y.float()
+        Y_prob, _, A = self.forward(X)
+        Y_prob = torch.clamp(Y_prob, min=1e-5, max=1. - 1e-5)
+
+        neg_log_likelihood = -1. * (Y * torch.log(Y_prob) + (1. - Y) * torch.log(1. - Y_prob))  # negative log bernoulli 
+
+
+        return neg_log_likelihood, A
+

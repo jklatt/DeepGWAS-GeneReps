@@ -151,6 +151,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     for i in range(0, num_genes_true):
         single_labels=[]
         data=[[]]*gene_length
+
         
         if interaction:
             num_snp_present=random.choices(range(num_casual_snp,max_present+1),k=1)[0]
@@ -177,20 +178,17 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
             
         for index in range(gene_length):
-            # values = randint(0, 4)
             values=values_list[index]
             item= [[index,values,present_list[index]]]
             data[index]=item
 
-        
-        for g in range(gene_length):
-            if ((present_list[g]==1) & (g in target_mutation_pos)):
-               label=True
+            if ((present_list[index]==1) & (index in target_mutation_pos)):
+                label=True
             else:
-               label=False    
+                label=False    
             single_labels.append(label)
 
-
+            
         causal_ind=[l for l, x in enumerate(single_labels) if x]
         causal_ind_list_true.append(causal_ind)
         casualsnp_freq_list_true.append(casualsnp_freq_true)
@@ -199,6 +197,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
 
         data_list_true.append(data)
+        
         label_list_true.append(single_labels)
         bag_label_list_true.append(bag_label)
 
@@ -212,9 +211,10 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
     # generate false samples
     for j in range(0, num_genes_false):
-        single_labels=[]
+        single_labels=[]        
         data=[[]]*gene_length
-        
+
+   
         if interaction:
             num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
             present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
@@ -224,8 +224,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
             bag_label=all(bag_label_check)
             casualsnp_freq_false=bag_label_check.count(1)
 
-           
-
+        
         else:
             if (max_present+len(target_mutation_pos))>gene_length:
                 num_snp_present=random.choices(range(1,gene_length+1-len(target_mutation_pos)),k=1)[0]
@@ -237,21 +236,18 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=any(bag_label_check)
             casualsnp_freq_false=bag_label_check.count(1)
-
-
-           
             
         for index in range(gene_length):
-            # values = randint(0, 4)
+            
+
             values=values_list[index]
             item= [[index,values,present_list[index]]]
             data[index]=item
 
-        for g in range(gene_length):
-            if ((present_list[g]==1) & (g in target_mutation_pos)):
-               label=True
+            if ((present_list[index]==1) & (index in target_mutation_pos)):
+                label=True
             else:
-               label=False         
+                label=False         
             single_labels.append(label)
 
 
@@ -261,6 +257,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
         actual_present_false.append(actual_present)
 
         data_list_false.append(data)
+
         label_list_false.append(single_labels)
         bag_label_list_false.append(bag_label)
 
@@ -315,7 +312,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     causal_ind_list_test=[l for one_label in test_label_list for l, x in enumerate(one_label) if x]
     causal_ind_list_val=[l for one_label in valid_label_list for l, x in enumerate(one_label) if x]
 
-
+   
     #get present SNP frequency
     causal_snp_freq_train=[sum(one_label) for one_label in train_label_list]
     causal_snp_freq_test=[sum(one_label) for one_label in test_label_list]

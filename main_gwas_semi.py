@@ -4,7 +4,7 @@ import argparse
 import torch
 import torch.optim as optim
 from torch.autograd import Variable
-from model_gwas import Attention, GatedAttention, SetTransformer
+from model_gwas import Attention, GatedAttention, SetTransformer,Attention_onlypresent, GatedAttention_onlypresent
 from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
@@ -41,6 +41,7 @@ parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if us
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
 parser.add_argument('--selected_length',type=int,default=500, help='selected length from nature data')
 parser.add_argument('--gene_ind',type=int,default=4, help='selected gene index')
+parser.add_argument('--onlypresent',type=int,default=1, help='only present indentifier model')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
@@ -63,6 +64,11 @@ if args.interaction==1:
     args.interaction=True
 else:
     args.interaction=False
+
+if args.onlypresent==0:
+    args.onlypresent=False
+else:
+    args.onlypresent=True
 
 if args.selected_length<500:
     present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength{}_alogPICK.pkl".format(args.selected_length))
@@ -143,6 +149,10 @@ elif args.model=='gated_attention':
     model = GatedAttention()
 elif args.model=='set_transformer':
     model = SetTransformer()
+elif args.model=='attention_onlypresent':
+    model=Attention_onlypresent()
+elif args.model=='gated_attention_onlypresent':
+    model=GatedAttention_onlypresent()
     
 if args.cuda:
     model.cuda()
@@ -156,63 +166,71 @@ def train(epoch,bag_class_weight_train, weight):
     train_error = 0.
     
     for batch_idx, (data, bag_label, label) in enumerate(train_loader):
-        # bag_label = label[0]
-        data=data.type(torch.FloatTensor)
-        if args.cuda:
-            data, bag_label = data.cuda(), bag_label.cuda()
-            # print("data is on", data.get_device())
-            # print("bag_label is on", bag_label.get_device())
-        data, bag_label = Variable(data), Variable(bag_label)
+        if args.onlypresent:
+            data=data.squeeze(0)
+            data=[[dat[0]] for dat in data if dat[2]==1]
+            data=torch.tensor(data)
 
-        # print('\ndata: ',data)
-        # print('\nlabel:',bag_label)
+        if len(data)>0:
 
-        # reset gradients
-        optimizer.zero_grad()
+            # bag_label = label[0]
+            data=data.type(torch.FloatTensor)
+            if args.cuda:
+                data, bag_label = data.cuda(), bag_label.cuda()
+                # print("data is on", data.get_device())
+                # print("bag_label is on", bag_label.get_device())
+            data, bag_label = Variable(data), Variable(bag_label)
+
+            # print('\ndata: ',data)
+            # print('\nlabel:',bag_label)
+
+            # reset gradients
+            optimizer.zero_grad()
 
 
-        # calculate loss and metrics 
-        loss, _ = model.calculate_objective(data, bag_label)
-        bag_class_weight_train=torch.tensor(bag_class_weight_train)
-        bag_class_weight_train=Variable(bag_class_weight_train,requires_grad=True)
+            # calculate loss and metrics 
+            loss, _ = model.calculate_objective(data, bag_label)
+            bag_class_weight_train=torch.tensor(bag_class_weight_train)
+            bag_class_weight_train=Variable(bag_class_weight_train,requires_grad=True)
 
-        if args.model!="set_transformer":
-            if args.weight_loss:
-                if bag_label:
-                    weighted_loss=bag_class_weight_train[0]*loss
+            if args.model!="set_transformer":
+                if args.weight_loss:
+                    if bag_label:
+                        weighted_loss=bag_class_weight_train[0]*loss
+                    else:
+                        weighted_loss=bag_class_weight_train[1]*loss
+                    train_loss += weighted_loss.data[0]
+
                 else:
-                    weighted_loss=bag_class_weight_train[1]*loss
-                train_loss += weighted_loss.data[0]
+                    train_loss += loss.data[0]
 
             else:
-                train_loss += loss.data[0]
+                if args.weight_loss:
+                    if bag_label:
+                        weighted_loss=bag_class_weight_train[0]*loss
+                    else:
+                        weighted_loss=bag_class_weight_train[1]*loss
+                    train_loss += weighted_loss
 
+                else:
+                    train_loss += loss
+
+
+                
+
+            error, _ = model.calculate_classification_error(data, bag_label)
+            train_error += error
+
+            # weighted_loss=Variable(weighted_loss,requires_grad=True)
+
+            # backward pass
+            weighted_loss.backward()#!!! here changed
+
+            # step
+            optimizer.step()
         else:
-            if args.weight_loss:
-                if bag_label:
-                    weighted_loss=bag_class_weight_train[0]*loss
-                else:
-                    weighted_loss=bag_class_weight_train[1]*loss
-                train_loss += weighted_loss
-
-            else:
-                train_loss += loss
-
-
-            
-
-        error, _ = model.calculate_classification_error(data, bag_label)
-        train_error += error
-
-        # weighted_loss=Variable(weighted_loss,requires_grad=True)
-
-        # backward pass
-        weighted_loss.backward()#!!! here changed
-
-        # step
-        optimizer.step()
-
-
+            pass
+        
     # calculate loss and error for epochl
     train_loss /= len(train_loader)
     train_error /= len(train_loader)
@@ -228,31 +246,40 @@ def val():
     val_loss = 0.
     val_error = 0.
     for batch_idx, (data, bag_label, label) in enumerate(validation_loader):
-        data=data.type(torch.FloatTensor)
+        if args.onlypresent:
+            data=data.squeeze(0)
+            data=[[dat[0]] for dat in data if dat[2]==1]
+            data=torch.tensor(data)
 
-        if args.cuda:
-            data, bag_label = data.cuda(), bag_label.cuda()
+        if len(data)>0:
+            data=data.type(torch.FloatTensor)
+
+            if args.cuda:
+                data, bag_label = data.cuda(), bag_label.cuda()
 
 
-        data, bag_label = Variable(data), Variable(bag_label)
-        loss, attention_weights = model.calculate_objective(data, bag_label)
-        # if args.weight_loss:
-        #     if bag_label:
-        #         weighted_loss=bag_class_weight_val[0]*loss
-        #     else:
-        #         weighted_loss=bag_class_weight_val[1]*loss
-        #     val_loss += weighted_loss.data[0]
+            data, bag_label = Variable(data), Variable(bag_label)
+            loss, attention_weights = model.calculate_objective(data, bag_label)
+            # if args.weight_loss:
+            #     if bag_label:
+            #         weighted_loss=bag_class_weight_val[0]*loss
+            #     else:
+            #         weighted_loss=bag_class_weight_val[1]*loss
+            #     val_loss += weighted_loss.data[0]
 
-        # else:
-        #     val_loss += loss.data[0]
-        if args.model!="set_transformer":
-            val_loss += loss.data[0]
+            # else:
+            #     val_loss += loss.data[0]
+            if args.model!="set_transformer":
+                val_loss += loss.data[0]
+            else:
+                val_loss += loss
+
+            error, predicted_label = model.calculate_classification_error(data, bag_label)
+            val_error += error
+
+
         else:
-            val_loss += loss
-
-        error, predicted_label = model.calculate_classification_error(data, bag_label)
-        val_error += error
-
+            pass
     val_error /= len(validation_loader)
     val_loss /= len(validation_loader)
 
@@ -298,65 +325,94 @@ def test(PATH):
 
 
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
-        # bag_label = label[0]
-        instance_labels = label
-        data=data.type(torch.FloatTensor)
-        if args.cuda:
-            data, bag_label = data.cuda(), bag_label.cuda()
-        data, bag_label = Variable(data), Variable(bag_label)
-        loss, attention_weights = model.calculate_objective(data, bag_label)
+        if args.onlypresent:
+            data=data.squeeze(0)
+            data=[[dat[0]] for dat in data if dat[2]==1]
+            data=torch.tensor(data)
 
-        if args.model!="set_transformer":
-            test_loss += loss.data[0]
-            y_prob,_,_ = model.forward(data)
+        if len(data)>0:
+            # bag_label = label[0]
+            instance_labels = label
+            data=data.type(torch.FloatTensor)
+            if args.cuda:
+                data, bag_label = data.cuda(), bag_label.cuda()
+            data, bag_label = Variable(data), Variable(bag_label)
+            loss, attention_weights = model.calculate_objective(data, bag_label)
 
-        else:
-            test_loss += loss
-            y_prob,_ = model.forward(data)
-            # y_prob
+            if args.model!="set_transformer":
+                test_loss += loss.data[0]
+                y_prob,_,_ = model.forward(data)
+
+            else:
+                test_loss += loss
+                y_prob,_ = model.forward(data)
+                # y_prob
+                
+            error, predicted_label = model.calculate_classification_error(data, bag_label)
+            test_error += error
+
+            y_prob=torch.clamp(y_prob, min=1e-5, max=1. - 1e-5)
+
+            true_label_list.append(bag_label.cpu().data.numpy())
+            pred_label_list.append(predicted_label.cpu().data.numpy())
+            if args.model!="set_transformer":
+                y_prob_list.append(y_prob.cpu().data.numpy()[0])
+            else:
+                y_prob_list.append(y_prob.cpu().data)
             
-        error, predicted_label = model.calculate_classification_error(data, bag_label)
-        test_error += error
+            if args.model!="set_transformer" and args.onlypresent==False:
+                if predicted_label.cpu().data.numpy()[0][0]==1:
+                    attention_array=attention_weights.cpu().data.numpy()[0]
 
-        y_prob=torch.clamp(y_prob, min=1e-5, max=1. - 1e-5)
+                    #counting for calculating probability of max weight if true label
+                    max_value=max(attention_array)
+                    max_attention= [i for i, j in enumerate(attention_array) if j == max_value]
+                    total_count+=1
+                    single_labels=instance_labels.numpy()[0].tolist()
+                    max_attention_list.append(max_attention)
+                    if single_labels[max_attention[0]]:
+                        rightattention_count+=1 
+                        
+                    attention_array_true_list.append(attention_array)
 
-        true_label_list.append(bag_label.cpu().data.numpy())
-        pred_label_list.append(predicted_label.cpu().data.numpy())
-        if args.model!="set_transformer":
-            y_prob_list.append(y_prob.cpu().data.numpy()[0])
-        else:
-            y_prob_list.append(y_prob.cpu().data)
-        
-        if args.model!="set_transformer":
-            if predicted_label.cpu().data.numpy()[0][0]==1:
-                attention_array=attention_weights.cpu().data.numpy()[0]
-
-                #counting for calculating probability of max weight if true label
-                max_value=max(attention_array)
-                max_attention= [i for i, j in enumerate(attention_array) if j == max_value]
-                total_count+=1
-                single_labels=instance_labels.numpy()[0].tolist()
-                max_attention_list.append(max_attention)
-                if single_labels[max_attention[0]]:
-                    rightattention_count+=1 
-                    
-                attention_array_true_list.append(attention_array)
-
-            #prepare list for instance level ROC
-            attention_array_list.append(attention_weights.cpu().data.numpy()[0].tolist())
-            single_labels_list.append(instance_labels.numpy()[0].tolist())
-
-           
-
-            if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
-                bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
-                instance_level = list(zip(instance_labels.numpy()[0].tolist(),
-                                    np.round(attention_weights.cpu().data.numpy()[0], decimals=3).tolist()))
-
-                print('\nTrue Bag Label, Predicted Bag Label: {}\n'
-                    'True Instance Labels, Attention Weights: {}'.format(bag_level, instance_level))
+                #prepare list for instance level ROC
+                attention_array_list.append(attention_weights.cpu().data.numpy()[0].tolist())
+                single_labels_list.append(instance_labels.numpy()[0].tolist())
 
             
+
+                if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
+                    bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
+                    instance_level = list(zip(instance_labels.numpy()[0].tolist(),
+                                        np.round(attention_weights.cpu().data.numpy()[0], decimals=3).tolist()))
+
+                    print('\nTrue Bag Label, Predicted Bag Label: {}\n'
+                        'True Instance Labels, Attention Weights: {}'.format(bag_level, instance_level))
+        else:
+            pass
+
+    if args.selected_length==20:
+        target_mutation=random.sample(range(args.selected_length),3)
+    elif args.selected_length==200 and args.gene_ind==0:
+        target_mutation=[114, 127, 189]
+    elif args.selected_length==200 and args.gene_ind==1:
+        target_mutation=[107, 110, 105]
+    elif args.selected_length==200 and args.gene_ind==2:
+        target_mutation=[78, 107, 169]
+    elif args.selected_length==200 and args.gene_ind==3:
+        target_mutation=[2, 4, 46]
+    elif args.selected_length==200 and args.gene_ind==4:
+        target_mutation=[159, 193, 196]
+    elif args.selected_length==500 and args.gene_ind==0:
+        target_mutation=[198, 201, 191]
+    elif args.selected_length==500 and args.gene_ind==1:
+        target_mutation=[433, 485, 521]
+    elif args.selected_length==500 and args.gene_ind==2:
+        target_mutation=[291, 318, 322]
+    elif args.selected_length==500 and args.gene_ind==3:
+        target_mutation=[171, 173, 247]
+    elif args.selected_length==500 and args.gene_ind==4:
+        target_mutation=[55, 414, 358]       
            
 
     if args.model!="set_transformer":
@@ -370,6 +426,30 @@ def test(PATH):
         print("------------------------------------------------------------------------")
         print("The averaging attention weight by position ALL bags", pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
         print("------------------------------------------------------------------------")
+
+
+        SAVING_INSTANCE_PATH=os.getcwd()+"semi_simulation_setting/instance_level_results_lr{}_{}/{}/".format(args.lr, args.model, args.seed)
+        avg_prediciton_truebag_label=[]
+        avg_prediciton_allbag_label=[]
+        avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
+        avg_predict_all_bags=pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
+        for i in range(15):
+            if avg_predict_true_bags.index[i] in target_mutation:
+                avg_prediciton_truebag_label.append(True)
+            else:
+                avg_prediciton_truebag_label.append(False)
+
+            if avg_predict_all_bags.index[i] in target_mutation:
+                avg_prediciton_allbag_label.append(True)
+            else:
+                avg_prediciton_allbag_label.append(False)
+
+        avg_predict_true_bags['label']=avg_prediciton_truebag_label
+        avg_predict_all_bags['label']=avg_prediciton_allbag_label
+        os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
+        save_file(SAVING_INSTANCE_PATH+"/truebags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length, args.interaction),avg_predict_true_bags)
+        save_file(SAVING_INSTANCE_PATH+"/allbags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length,args.interaction),avg_predict_all_bags)
+
 
         if total_count==0:
             print('The estimated probability of the right largest attention is',rightattention_count/(total_count+0.000000000001))
@@ -392,7 +472,7 @@ def test(PATH):
     precision, recall, thresholds_prc = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(y_prob_list))
     prc_avg = average_precision_score(np.concatenate(true_label_list),np.concatenate(y_prob_list))
 
-    if args.model!="set_transformer":
+    if args.model!="set_transformer" and args.onlypresent==False:
         # Matrics and plots instance level
         instance_level_score=np.concatenate(attention_array_list)
         instance_level_truth=np.concatenate(single_labels_list)
@@ -431,7 +511,7 @@ def test(PATH):
         evaluation_dict['prc_avg_bag']=prc_avg
         
    
-    if args.model!="set_transformer":
+    if args.model!="set_transformer" and args.onlypresent==False:
         figure, axis = plt.subplots(2, 2, figsize=(7, 7))
         figure.suptitle('gene_ind{}_i{}'.format(args.gene_ind,args.interaction), fontsize=16)
 

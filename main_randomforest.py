@@ -118,43 +118,45 @@ elif 1/bag_class_weight_train[0]<0.5:
 
     bag_class_weight_train=get_weight(bag_label_list_train)
 
-def extract_moments(data_list_train):
+def extract_moments(data_list_train, bag_label):
     data_out=[]
-    for data in data_list_train: 
-        m1=np.mean(data,axis=0)[0][2]
-        m2=np.std(data,axis=0)[0][2]**2
-        m3=skew(data,axis=0)[0][2]
-        m4=kurtosis(data,axis=0)[0][2]
+    bag_out=[]
+    for i, data in enumerate(data_list_train): 
+        present_identifier=[dat[0] for dat in data if dat[2]==1]
+        m1=np.mean(present_identifier)
+        m2=np.std(present_identifier)**2
+        m3=skew(present_identifier)
+        m4=kurtosis(present_identifier)
+        if not np.isnan([m1,m2,m3,m4]).any():
+            data_out.append([m1,m2,m3,m4])
+            bag_out.append(bag_label[i])
+    return data_out, bag_out
 
-        # m5=np.mean(data,axis=0)[0][1]
-        # m6=np.std(data,axis=0)[0][1]**2
-        # m7=skew(data,axis=0)[0][1]
-        # m8=kurtosis(data,axis=0)[0][1]
-        # data_out.append([m1,m2,m3,m4,m5,m6,m7,m8])
-        data_out.append([m1,m2,m3,m4])
-    return data_out
+data_moment_train,bag_label_train=extract_moments(data_list_train,bag_label_list_train)
+data_moment_test,bag_label_test=extract_moments(data_list_test,bag_label_list_test)
 
-data_moment_train=extract_moments(data_list_train)
-data_moment_valid=extract_moments(val_data_list)
-data_moment_test=extract_moments(data_list_test)
+if args.model=="logistic":
+    #fiting logistic regression
+    clf = LogisticRegression(random_state=0).fit(data_moment_train, bag_label_train)
+    
+elif args.model=="random_forest":
+    #fiting random forest
+    clf = RandomForestClassifier(n_estimators=200,random_state=args.seed)
+    clf.fit(data_moment_train, bag_label_list_train)
+   
 
-#fiting random forest
-clf = RandomForestClassifier(n_estimators=400,max_depth=50, random_state=args.seed)
-clf.fit(data_moment_train, bag_label_list_train)
-
-#fiting logistic regression
-# clf = LogisticRegression(random_state=0).fit(data_moment_train, bag_label_list_train)
 
 predictions=clf.predict(data_moment_test)
+prediction_prob=clf.predict_proba(data_moment_test)[::,1]
 print(confusion_matrix(bag_label_list_test,predictions))
 
 
 # Matrics and plots bag level
-fpr, tpr, threshold_roc=roc_curve(bag_label_list_test, predictions)
+fpr, tpr, threshold_roc=roc_curve(bag_label_list_test, prediction_prob)
 roc_auc = auc(fpr, tpr)
 
-precision, recall, thresholds_prc = precision_recall_curve(bag_label_list_test, predictions)
-prc_avg = average_precision_score(bag_label_list_test, predictions)
+precision, recall, thresholds_prc = precision_recall_curve(bag_label_list_test, prediction_prob)
+prc_avg = average_precision_score(bag_label_list_test, prediction_prob)
 
 SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments/{}/".format(args.seed)
 os.makedirs(SAVING_METRIC_PATH, exist_ok=True)
