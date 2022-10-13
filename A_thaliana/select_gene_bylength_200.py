@@ -18,14 +18,14 @@ gene_persample = dict()
 pos = bim['pos'].values
 chromosome = bim['chrom'].values
 
-selected_length=200#the varible of selected gene length
+selected_length=500#the varible of selected gene length
 # selected_length=200#the varible of selected gene length
 wanted_present_num=2029*0.2
 selected_gene=[]
 selected_gene_length=[]
 for i in range(len(df)):
-    # if len(df[list(df.keys())[i]])>selected_length:
-    if len(df[list(df.keys())[i]])==selected_length:
+    if len(df[list(df.keys())[i]])>selected_length:
+    # if len(df[list(df.keys())[i]])==selected_length:
         selected_gene.append(list(df.keys())[i])
         selected_gene_length.append(len(df[list(df.keys())[i]]))
 
@@ -61,7 +61,7 @@ for gene in selected_gene:
 
                 #select the most present SNP
                 count_present=np.sum(gene_by_sample_, 0)
-                top_1_snp=sort_index(count_present)[:1]
+                top_1_snp=sort_index(count_present)[2:3]
                 print("the most present snp is", top_1_snp[0])
 
                 #get the sample with top1 SNP are present
@@ -69,7 +69,9 @@ for gene in selected_gene:
 
                 #within already top1 present sample count the next most present sample. 
                 top_1_present_samples=gene_by_sample_[top_1_present_ind]
-                count_present_1=np.sum(top_1_present_samples, 0)
+                count_present_1=np.sum(top_1_present_samples,0)
+                # top_1_snp_second=sort_index(count_present_1)[:1]
+
                 top_1_snp_second=sort_index(count_present_1)[1:2]
                 print("the next most present snp is", top_1_snp_second[0])
 
@@ -82,7 +84,7 @@ for gene in selected_gene:
 
 for sample in selectedsamples:
     total_present=np.sum(sample, 1)
-    avg_present_per=np.mean(total_present)/selected_length
+    avg_present_per=np.mean(total_present)/sample.shape[1]
     print("the present percentage is", avg_present_per)
 
 

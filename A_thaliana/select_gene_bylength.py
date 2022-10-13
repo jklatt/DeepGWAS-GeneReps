@@ -41,7 +41,6 @@ print("number of gene with length", selected_length, len(select_5_genes))
 # snp20 by algo
 # select_5_genes=['AT4G02310', 'AT1G75080', 'AT2G45630', 'AT5G47960', 'AT1G64640']
 
-
 gene_by_sample_prop_list=[]
 snp_index_list=[]
 selected_gene_samples=[]

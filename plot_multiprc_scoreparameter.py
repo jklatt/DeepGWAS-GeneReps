@@ -5,7 +5,7 @@ import pickle
 import os
 import numpy as np
 #change the seeds accodringly!!!
-ploting_snp="200"
+ploting_snp="20"
 def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter, path):
     # extracting max_present dictionary
     evaluation_scores_true={}
@@ -127,8 +127,11 @@ elif ploting_snp=="150":
 # path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_fixedSNPtype_withinstance/"
 # path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_alogpick/"
 # path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_fixedSNPtype_onlypresentTrue/"
-# path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_fixedSNPtype_withinstance/"
-path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_attention_/"
+# path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_fixedSNPtype_onlypresentFalse_withattention/"
+# path="/home/zixshu/DeepGWAS/baseline/metrics_correctbaseline/"
+# path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_fixedSNPtype_onlypresentTrue/"
+
+path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_fixedSNPtype_onlypresentFalse_withattention/"
 reference_setting={}
 calculating_avg={}
 for seed in selected_seed:
@@ -174,8 +177,8 @@ for seed in selected_seed:
 
             if "True" in file:
                 #interporating the line on graph
-                min_pre,max_pre=standard_seting['precision_bag'][0], standard_seting['precision_bag'][-1]
-                min_recall,max_recall=standard_seting['recall_bag'][0], standard_seting['recall_bag'][-1]
+                min_pre,max_pre=standard_seting['precision_bag'][0],  max(standard_seting['precision_bag'])
+                min_recall,max_recall=1, min(standard_seting['recall_bag'])
                 new_a1_x = np.linspace(min_pre, max_pre, 1000)
                 new_a2_x = np.linspace(min_recall, max_recall, 1000)
                 # new_a1_y = np.interp(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
@@ -255,8 +258,8 @@ def ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteri
     #     for par in list(reference_setting[seed].keys()):
     #         if "true" not in par:
     #             axis[0,0].plot(reference_setting[seed][par]['recall'],reference_setting[seed][par]['precision'],label="w interaction AUC="+str(round(reference_setting[seed][par]['prc_avg'],3)))
-            # else:
-            #     axis[0,0].plot(reference_setting[seed][par]['recall'],reference_setting[seed][par]['precision'],label="w/o interaction AUC="+str(round(reference_setting[seed][par]['prc_avg'],3)))
+    #         else:
+    #             axis[0,0].plot(reference_setting[seed][par]['recall'],reference_setting[seed][par]['precision'],label="w/o interaction AUC="+str(round(reference_setting[seed][par]['prc_avg'],3)))
     axis[0,0].plot(calculating_avg['interaction_false']["avg_recall"],calculating_avg["interaction_false"]["avg_precision"],label="w/o interaction avg",color="orange")
     axis[0,0].plot(calculating_avg['interaction_true']["avg_recall"],calculating_avg["interaction_true"]["avg_precision"],label="w interaction avg",color="blue")
     axis[0,0].fill_between(x=calculating_avg["interaction_true"]["avg_recall"],
@@ -403,7 +406,7 @@ def ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteri
             axis[1,1].fill_between(np.array(x),y1=np.add(np.array(values_arr_prc_false),np.array(sd_arr_prc_false)),y2=np.subtract(np.array(values_arr_prc_false),np.array(sd_arr_prc_false)),alpha=0.2)
             
             axis[1,1].set_xlim([0,max(x)])
-            axis[1,1].set_ylim([0,5])
+            axis[1,1].set_ylim([0,7])
             axis[1,1].set_ylabel("AUPRC")
             axis[1,1].set_title("{}{}_{}".format(criteriapre1, criteriapre2, criteriapre3))
             axis[1,1].legend(prop={'size': 8})
@@ -498,9 +501,9 @@ elif ploting_snp=="150":
     criteriapre2="csnp3" 
     criteriapre3="max0.9"
 
-saving_path="/home/zixshu/DeepGWAS/plot_instances_level/"
+saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_gated_attention_weightedfixed_withattetion_forwardfill/"
+# saving_path="/home/zixshu/DeepGWAS/baseline_toy_setting_plots/"
 os.makedirs(saving_path,exist_ok=True)
-
 ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base,criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,saving_path)
 
 

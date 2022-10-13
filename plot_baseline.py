@@ -4,13 +4,13 @@ import os
 import numpy as np
 
 
-ploting_length=20
-setting='semi'
+ploting_length=200
+setting='control'
 
 
 if setting=='control':
     seeds=range(1,6)
-    METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments"
+    METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_correctbaseline"
 elif setting=="semi":
     seeds=range(5)
     METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_logistic"

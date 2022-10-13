@@ -43,7 +43,7 @@ parser.add_argument('--seed', type=int, default=1,
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--model', type=str, default='attention_onlypresent', help='Choose b/w attention and gated_attention')
-parser.add_argument('-nsnp','--num_snp',type=int, default=15,help='number of SNP in elvery sample')
+parser.add_argument('-nsnp','--num_snp',type=int, default=30,help='number of SNP in elvery sample')
 parser.add_argument('-maxp','--max_present',type=float, default=0.3,  help='maximun number of present SNP in every sample')
 parser.add_argument('-ncsnp','--num_casual_snp', type=int, default=3, help='number of ground truth causal SNP')
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
@@ -333,12 +333,20 @@ def test(PATH):
     y_prob_list=[]
     attention_array_true_list=[]
     max_attention_list=[]
+    # single_labels_true_list=[]
+    identifier_list=[]
+    identifier_true_list=[]
 
 
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
         if args.onlypresent:
             data=data.squeeze(0)
+            present_list=[i for i, dat in enumerate(data) if dat[0][2]==1]
+            label=[label[0][i] for i in present_list]
+
             data=[[dat[0][0]] for dat in data if dat[0][2]==1]
+            
+            label=torch.tensor(label)
             data=torch.tensor(data)
 
         # bag_label = label[0]
@@ -370,31 +378,48 @@ def test(PATH):
         else:
             y_prob_list.append(y_prob.cpu().data)
         
-        if args.model!="set_transformer" and args.onlypresent==False:
+        if args.model!="set_transformer":
             if predicted_label.cpu().data.numpy()[0][0]==1:
                 attention_array=attention_weights.cpu().data.numpy()[0]
-
                 #counting for calculating probability of max weight if true label
                 max_value=max(attention_array)
                 max_attention= [i for i, j in enumerate(attention_array) if j == max_value]
                 total_count+=1
-                single_labels=instance_labels.numpy()[0].tolist()
+                if args.onlypresent:
+                    single_labels=instance_labels.numpy().tolist()
+                else:
+                    single_labels=instance_labels.numpy()[0].tolist()
                 max_attention_list.append(max_attention)
+
                 if single_labels[max_attention[0]]:
                     rightattention_count+=1 
                     
                 attention_array_true_list.append(attention_array)
+                # single_labels_true_list.append(single_labels)
+                if args.onlypresent:
+                    identifier_true_list.append(data.cpu().data.numpy().tolist())
+
 
             #prepare list for instance level ROC
             attention_array_list.append(attention_weights.cpu().data.numpy()[0].tolist())
-            single_labels_list.append(instance_labels.numpy()[0].tolist())
+            if args.onlypresent:
+                single_labels_list.append(instance_labels.numpy().tolist())
+            else:
+                single_labels_list.append(instance_labels.numpy()[0].tolist())
+            identifier_list.append(data.cpu().data.numpy().tolist())
+
 
            
 
             if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
                 bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
-                instance_level = list(zip(instance_labels.numpy()[0].tolist(),
-                                    np.round(attention_weights.cpu().data.numpy()[0], decimals=3).tolist()))
+                if args.onlypresent:
+                    print(instance_labels.cpu().data.tolist())
+                    instance_level = list(zip(instance_labels.numpy().tolist(),
+                                        np.round(attention_weights.cpu().data.numpy(), decimals=3).tolist()))
+                else:
+                    instance_level = list(zip(instance_labels.numpy()[0].tolist(),
+                                        np.round(attention_weights.cpu().data.numpy()[0], decimals=3).tolist()))
 
                 print('\nTrue Bag Label, Predicted Bag Label: {}\n'
                     'True Instance Labels, Attention Weights: {}'.format(bag_level, instance_level))
@@ -402,14 +427,19 @@ def test(PATH):
             
            
 
-    if args.model!="set_transformer":
+    if args.model!="set_transformer" and args.onlypresent==False and len(max_attention_list)>0:
         max_pos_df=pd.DataFrame(np.concatenate(max_attention_list)).groupby([0]).size().sort_values(ascending=False)
         print("------------------------------------------------------------------------")
         print("Max Attention Position Statistics", max_pos_df)
-        attention_true=pd.DataFrame(attention_array_true_list)
+
+
+    if args.model!="set_transformer" and args.onlypresent==False:    
+        if len(attention_array_true_list)>0:
+            attention_true=pd.DataFrame(attention_array_true_list)
+            print("------------------------------------------------------------------------")
+            print("The averaging attention weight by position predicted TRUE bags", pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
+
         attention_df=pd.DataFrame(attention_array_list)
-        print("------------------------------------------------------------------------")
-        print("The averaging attention weight by position predicted TRUE bags", pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
         print("------------------------------------------------------------------------")
         print("The averaging attention weight by position ALL bags", pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
         print("------------------------------------------------------------------------")
@@ -418,23 +448,31 @@ def test(PATH):
         SAVING_INSTANCE_PATH=os.getcwd()+"/instance_level_results_lr{}_{}_/{}/".format(args.lr, args.model, args.seed)
         avg_prediciton_truebag_label=[]
         avg_prediciton_allbag_label=[]
-        avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
-        avg_predict_all_bags=pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
-        for i in range(15):
-            if avg_predict_true_bags.index[i] in target_mutation:
-                avg_prediciton_truebag_label.append(True)
-            else:
-                avg_prediciton_truebag_label.append(False)
+        if len(attention_array_true_list)>0:
+            avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False)
+
+        avg_predict_all_bags=pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False)
+
+        for i in range(avg_predict_all_bags.shape[0]):
+            if len(attention_array_true_list)>0:
+                if avg_predict_true_bags.index[i] in target_mutation:
+                    avg_prediciton_truebag_label.append(True)
+                else:
+                    avg_prediciton_truebag_label.append(False)
 
             if avg_predict_all_bags.index[i] in target_mutation:
                 avg_prediciton_allbag_label.append(True)
             else:
                 avg_prediciton_allbag_label.append(False)
 
-        avg_predict_true_bags['label']=avg_prediciton_truebag_label
-        avg_predict_all_bags['label']=avg_prediciton_allbag_label
+
+
         os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
-        save_file(SAVING_INSTANCE_PATH+"/truebags_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence),avg_predict_true_bags)
+        if len(attention_array_true_list)>0:
+            avg_predict_true_bags['label']=avg_prediciton_truebag_label
+            save_file(SAVING_INSTANCE_PATH+"/truebags_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence),avg_predict_true_bags)
+        
+        avg_predict_all_bags['label']=avg_prediciton_allbag_label
         save_file(SAVING_INSTANCE_PATH+"/allbags_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence),avg_predict_all_bags)
 
 
@@ -442,6 +480,40 @@ def test(PATH):
             print('The estimated probability of the right largest attention is',rightattention_count/(total_count+0.000000000001))
         else:
             print('The estimated probability of the right largest attention is',rightattention_count/total_count)
+
+    if args.onlypresent==1:
+
+        SAVING_INSTANCE_PATH=os.getcwd()+"/instance_level_results_lr{}_{}_onlypresent{}/{}/".format(args.lr, args.model,args.onlypresent, args.seed)
+        os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
+
+        predict_all_bags=pd.DataFrame(np.concatenate(attention_array_list))
+        predict_all_bags['identifier']=np.concatenate(identifier_list)
+        predict_all_bags_mean=predict_all_bags.groupby(['identifier']).mean()
+        identifier_labels=[]
+        for i in range(predict_all_bags_mean.shape[0]):
+            if i in target_mutation:
+                label=True
+            else:
+                label=False
+            identifier_labels.append(label)
+        predict_all_bags_mean['labels']=identifier_labels
+
+        if len(attention_array_true_list):
+            predict_true_bags=pd.DataFrame(np.concatenate(attention_array_true_list))
+            # predict_true_bags['label']=np.concatenate(single_labels_true_list)
+            predict_true_bags['identifier']=np.concatenate(identifier_true_list)
+            predict_true_bags_mean=predict_true_bags.groupby(['identifier']).mean()
+            identifier_true_labels=[]
+            for j in range(predict_true_bags_mean.shape[0]):
+                if j in target_mutation:
+                    label=True
+                else:
+                    label=False
+                identifier_true_labels.append(label)
+
+            predict_true_bags_mean['label']=identifier_true_labels
+            save_file(SAVING_INSTANCE_PATH+"/truebags_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence),predict_true_bags_mean)
+        save_file(SAVING_INSTANCE_PATH+"/allbags_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl".format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence),predict_all_bags_mean)
 
 
     print('confusion matrix:',confusion_matrix(np.concatenate(true_label_list), np.concatenate(pred_label_list)))
@@ -571,17 +643,15 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
+    SAVING_PATH=os.getcwd()+'/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}_withattention_all/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}_withattention_all/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
     if args.prevalence:
         PLOT_PATH=SAVING_PATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
         EVALUATION_PATH=EVALUATION_SAVINGPATH+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
-
-
         
     else:
         PLOT_PATH=SAVING_PATH+'/nsnp{}_max{}_csnp{}_i{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
@@ -598,7 +668,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
+    PATH=working_dir+'/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}_withattention_all/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)
 
     os.makedirs(PATH, exist_ok=True)
     if args.control_prevalence:
@@ -610,7 +680,7 @@ if __name__ == "__main__":
 
     min_loss=np.inf
     if args.num_snp<=100:
-        #patience was 12
+        #squeuience was 12
         scheduler = ReduceLROnPlateau(optimizer=optimizer, mode='min',patience=10, min_lr=0.00001,factor=0.5,verbose=True)
 
     elif 100<args.num_snp<=2000:  
@@ -632,8 +702,8 @@ if __name__ == "__main__":
         elif 100<args.num_snp<=2000:  
             scheduler.step(val_loss)
 
-        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/".format(args.lr,args.model,args.onlypresent)+ str(args.seed), exist_ok=True)
-        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
+        os.makedirs("./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}_withattention_all/".format(args.lr,args.model,args.onlypresent)+ str(args.seed), exist_ok=True)
+        writer = SummaryWriter('./tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_fixedSNPtype_onlypresent{}_withattention_all/'.format(args.lr,args.model,args.onlypresent)+ str(args.seed)+'/nsnp{}_max{}_csnp{}_i{}_prevalence{}'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

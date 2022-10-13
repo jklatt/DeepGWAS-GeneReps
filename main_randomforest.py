@@ -122,7 +122,7 @@ def extract_moments(data_list_train, bag_label):
     data_out=[]
     bag_out=[]
     for i, data in enumerate(data_list_train): 
-        present_identifier=[dat[0] for dat in data if dat[2]==1]
+        present_identifier=[dat[0][0] for dat in data if dat[0][2]==1]
         m1=np.mean(present_identifier)
         m2=np.std(present_identifier)**2
         m3=skew(present_identifier)
@@ -158,9 +158,9 @@ roc_auc = auc(fpr, tpr)
 precision, recall, thresholds_prc = precision_recall_curve(bag_label_list_test, prediction_prob)
 prc_avg = average_precision_score(bag_label_list_test, prediction_prob)
 
-SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments/{}/".format(args.seed)
+SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_correctbaseline/{}/".format(args.seed)
 os.makedirs(SAVING_METRIC_PATH, exist_ok=True)
-EVALUATION_PATH=SAVING_METRIC_PATH+'evaluation_score_nsnp{}_max{}_csnp{}_i{}.pkl'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+EVALUATION_PATH=SAVING_METRIC_PATH+'evaluation_score_nsnp{}_max{}_csnp{}_i{}_prevalence{}.pkl'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 evaluation_dict={}
 evaluation_dict['fpr']=fpr
 evaluation_dict['tpr']=tpr
@@ -195,10 +195,10 @@ axis[1].axhline(y=0.35, color='grey', linestyle='dotted')
 
 plt.tight_layout()
 
-SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_fourmoments/{}/".format(args.seed)
+SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_correctbaseline/{}/".format(args.seed)
 os.makedirs(SAVING_PATH, exist_ok=True)
 
-PLOT_PATH=SAVING_PATH+'nsnp{}_max{}_csnp{}_i{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction)
+PLOT_PATH=SAVING_PATH+'nsnp{}_max{}_csnp{}_i{}_prevalence{}.png'.format(args.num_snp,args.max_present,args.num_casual_snp,args.interaction,args.prevalence)
 plt.savefig(PLOT_PATH)
 
 

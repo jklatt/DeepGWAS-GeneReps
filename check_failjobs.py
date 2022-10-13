@@ -2,11 +2,14 @@ import os
 
 
 
-PATH="/home/zixshu/DeepGWAS/output_attention_weightedfixed_snptypefixed/"
+# PATH="/home/zixshu/DeepGWAS/output_attention_weightedfixed_snptypefixed/"
+# PATH="/home/zixshu/DeepGWAS/output_attention_withattentionweight_rerun/"
+PATH="/home/zixshu/DeepGWAS/output_gated_attention_withattention_rerun/"
+
 filenames=os.listdir(PATH)
 count=0
 for name in filenames:
-    if "1000" in name:
+    # if "1000" in name:
     # if "lr0.003" in name:
         filepath=PATH+"/"+name
         with open(filepath) as f:

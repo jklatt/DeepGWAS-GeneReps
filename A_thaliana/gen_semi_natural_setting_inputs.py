@@ -4,11 +4,14 @@ import random
 import os
 import pandas as pd
 
-# present_df=load_file("/home/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength20_seed2.pkl")
-# selected_length=20
-# interaction=False
-# gene=0 #range{0,5}
-# random.seed(1)
+# present_df=load_file("/links/homes/gridhome/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength20_alogPICK.pkl")
+# present_df=load_file("/links/homes/gridhome/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength200_alogPICK.pkl")
+present_df=load_file("/links/homes/gridhome/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength500greaterthan_alogPICK.pkl")
+selected_length=500
+interaction=False
+# interaction=True
+gene=4#range{0,5}
+random.seed(1)
 def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     # for  in range(len(present_df)):
     data_list=[]
@@ -22,29 +25,52 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     snp_type=np.random.randint(0,4,actually_length)
 
     if selected_length==20:
-        target_mutation_pos=random.sample(range(selected_length),3)
+        # target_mutation_pos=random.sample(range(selected_length),3)
+        target_mutation_pos=[1,2,18]
         
+    #top snps
+    # elif selected_length==200 and gene==0:
+    #     target_mutation_pos=[114, 127, 189]
+    # elif selected_length==200 and gene==1:
+    #     target_mutation_pos=[107, 110, 105]
+    # elif selected_length==200 and gene==2:
+    #     target_mutation_pos=[78, 107, 169]
+    # elif selected_length==200 and gene==3:
+    #     target_mutation_pos=[2, 4, 46]
+    # elif selected_length==200 and gene==4:
+    #     target_mutation_pos=[159, 193, 196]
+
+    # elif selected_length==500 and gene==0:
+    #     target_mutation_pos=[198, 201, 191]
+    # elif selected_length==500 and gene==1:
+    #     target_mutation_pos=[433, 485, 521]
+    # elif selected_length==500 and gene==2:
+    #     target_mutation_pos=[291, 318, 322]
+    # elif selected_length==500 and gene==3:
+    #     target_mutation_pos=[171, 173, 247]
+    # elif selected_length==500 and gene==4:
+    #     target_mutation_pos=[55, 414, 358]
+
     elif selected_length==200 and gene==0:
         target_mutation_pos=[114, 127, 189]
     elif selected_length==200 and gene==1:
-        target_mutation_pos=[107, 110, 105]
+        target_mutation_pos=[116, 117, 118]
     elif selected_length==200 and gene==2:
-        target_mutation_pos=[78, 107, 169]
+        target_mutation_pos=[175,177,191]
     elif selected_length==200 and gene==3:
-        target_mutation_pos=[2, 4, 46]
+        target_mutation_pos=[80,87,2]
     elif selected_length==200 and gene==4:
-        target_mutation_pos=[159, 193, 196]
-
+        target_mutation_pos=[193, 196, 197]
     elif selected_length==500 and gene==0:
         target_mutation_pos=[198, 201, 191]
     elif selected_length==500 and gene==1:
-        target_mutation_pos=[433, 485, 521]
+        target_mutation_pos=[357,406,360]
     elif selected_length==500 and gene==2:
-        target_mutation_pos=[291, 318, 322]
+        target_mutation_pos=[147, 148, 298]
     elif selected_length==500 and gene==3:
-        target_mutation_pos=[171, 173, 247]
+        target_mutation_pos=[171, 193, 173]
     elif selected_length==500 and gene==4:
-        target_mutation_pos=[55, 414, 358]
+        target_mutation_pos=[220, 222, 210]
 
     print("the target mutation position is", target_mutation_pos)
     
@@ -73,7 +99,8 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
 
     return bag_label_list, data_list, single_labels_list
 
-# bag_label_list, data_list, single_labels_list=gene_data_gen(gene,present_df, selected_length, interaction)
+bag_label_list, data_list, single_labels_list=gene_data_gen(gene,present_df, selected_length, interaction)
+
 # print(bag_label_list)
 # print(data_list)
 # print(single_labels_list)
