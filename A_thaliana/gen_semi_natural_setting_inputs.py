@@ -6,12 +6,12 @@ import pandas as pd
 
 # present_df=load_file("/links/homes/gridhome/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength20_alogPICK.pkl")
 # present_df=load_file("/links/homes/gridhome/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength200_alogPICK.pkl")
-present_df=load_file("/links/homes/gridhome/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength500greaterthan_alogPICK.pkl")
-selected_length=500
-interaction=False
-# interaction=True
-gene=4#range{0,5}
-random.seed(1)
+# present_df=load_file("/links/homes/gridhome/zixshu/DeepGWAS/DeepGWAS-GeneReps/A_thaliana/selected_gene_sample_snplength500greaterthan_alogPICK.pkl")
+# selected_length=500
+# interaction=False
+# # interaction=True
+# gene=4#range{0,5}
+# random.seed(1)
 def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
     # for  in range(len(present_df)):
     data_list=[]
@@ -99,7 +99,7 @@ def gene_data_gen(gene:int, present_df, selected_length:int, interaction:bool):
 
     return bag_label_list, data_list, single_labels_list
 
-bag_label_list, data_list, single_labels_list=gene_data_gen(gene,present_df, selected_length, interaction)
+# bag_label_list, data_list, single_labels_list=gene_data_gen(gene,present_df, selected_length, interaction)
 
 # print(bag_label_list)
 # print(data_list)

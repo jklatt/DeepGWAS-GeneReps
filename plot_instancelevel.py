@@ -6,14 +6,27 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 
 seeds=range(1,6)
-ploting_snp=200
+ploting_snp=20
 criteria_bag="allbags_"
 # criteria_bag="truebags"
 
-# #attention
-path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_attention_/"
-saving_path="/home/zixshu/DeepGWAS/plot_instances_level/"
+attention_mec="gated_attention_onlypresent"
+if attention_mec=="attention":
+    # #attention
+    path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_attention_/"
+    saving_path="/home/zixshu/DeepGWAS/plot_instances_level_attention_onlypresentFalse/"
 
+elif attention_mec=="gated_attention":
+    path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_gated_attention_/"
+    saving_path="/home/zixshu/DeepGWAS/plot_instances_level_gated_attention_onlypresentFalse/"
+
+
+elif attention_mec=="attention_onlypresent":
+    path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_attention_onlypresent_onlypresentTrue/"
+    saving_path="/home/zixshu/DeepGWAS/plot_instances_level_attention_onlypresentTrue/"
+elif attention_mec=="gated_attention_onlypresent":
+    path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_gated_attention_onlypresent_onlypresentTrue/"
+    saving_path="/home/zixshu/DeepGWAS/plot_instances_level_gated_attention_onlypresentTrue/"
 #gated_attention
 # path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_gated_attention_/"
 # saving_path="/home/zixshu/DeepGWAS/plot_gated_attention_instances_level/"
@@ -33,7 +46,7 @@ elif ploting_snp==200:
     criteria3_base="max0.8"
     criteria4_base="prevalence0.35"
 
-def read_result_byseed(seeds, criteria1, criteria2, criteria3, criteria4, get_avg_dic, variating_parameter, path):
+def read_result_byseed(seeds, criteria1, criteria2, criteria3, criteria4, get_avg_dic, variating_parameter, path, attention_mec):
     # extracting max_present dictionary
     evaluation_scores_true={}
     evaluation_scores_false={}
@@ -75,7 +88,10 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, criteria4, get_av
                     with open(FILE_PATH, "rb") as f:
                         evaluation_dict=pickle.load(f)
                     attention_weights=evaluation_dict[0]
-                    labels=evaluation_dict['label']
+                    if "onlypresent" in attention_mec:
+                        labels=evaluation_dict['labels']
+                    else:
+                        labels=evaluation_dict['labels']
 
                     # Matrics and plots bag level
                     fpr, tpr, threshold_roc=roc_curve(labels,attention_weights)
@@ -239,7 +255,7 @@ def forward_filling(new_list1, list1, list2):
 
 
 
-def ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base, criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,savingpath):
+def ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base, criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,savingpath, read_result_byseed,attention_mec):
 
    
     criteriasnp3=criteriasnp3[0:14]
@@ -262,7 +278,7 @@ def ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteri
     figure.delaxes(axis[1,1])
     for parameter in variating_parameters:
         if parameter=="csnp":
-            evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteriasnp1, criteriasnp2, criteriasnp3, criteria_bag,get_avg_dic, parameter, path)
+            evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteriasnp1, criteriasnp2, criteriasnp3, criteria_bag,get_avg_dic, parameter, path, attention_mec)
 
             split_element_true=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('p')]
             split_element_false=list(list(evaluation_scores_false_avg.keys())[0])[list(list(evaluation_scores_false_avg.keys())[0]).index('p')]
@@ -306,7 +322,7 @@ def ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteri
             
 
         if parameter=="max_present":
-            evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteriamax1, criteriamax2, criteriamax3, criteria_bag, get_avg_dic, parameter,path)
+            evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteriamax1, criteriamax2, criteriamax3, criteria_bag, get_avg_dic, parameter,path,attention_mec)
 
             split_element_true=list(list(evaluation_scores_true_avg.keys())[0])[list(list(evaluation_scores_true_avg.keys())[0]).index('0')-1]
             split_element_false=list(list(evaluation_scores_false_avg.keys())[0])[list(list(evaluation_scores_false_avg.keys())[0]).index('0')-1]
@@ -353,7 +369,7 @@ def ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteri
 
 
         if parameter=="prevalence":
-            evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteriapre1, criteriapre2, criteriapre3,criteria_bag, get_avg_dic,variating_parameter=parameter, path=path)
+            evaluation_scores_true_avg, evaluation_scores_false_avg= read_result_byseed(seeds, criteriapre1, criteriapre2, criteriapre3,criteria_bag, get_avg_dic,variating_parameter=parameter, path=path, attention_mec=attention_mec)
 
             split_element_false=list(list(evaluation_scores_false_avg.keys())[0])[list(list(evaluation_scores_false_avg.keys())[0]).index('0')-1]
             parameters_false=sorted(list(evaluation_scores_false_avg.keys()), key=lambda x: float(x.split(split_element_false)[-1]))
@@ -433,7 +449,7 @@ elif ploting_snp==200:
 
 os.makedirs(saving_path,exist_ok=True)
 
-ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base,criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,saving_path)
+ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base,criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,saving_path,read_result_byseed, attention_mec)
 
         
 

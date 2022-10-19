@@ -34,14 +34,14 @@ parser.add_argument('--seed', type=int, default=2,
                     help='random seed (default: 1)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--model', type=str, default='set_transformer', help='Choose b/w attention and gated_attention')
+parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
 parser.add_argument('--selected_length',type=int,default=500, help='selected length from nature data')
 parser.add_argument('--gene_ind',type=int,default=4, help='selected gene index')
-parser.add_argument('--onlypresent',type=int,default=1, help='only present indentifier model')
+parser.add_argument('--onlypresent',type=int,default=0, help='only present indentifier model')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
@@ -323,12 +323,20 @@ def test(PATH):
     attention_array_true_list=[]
     max_attention_list=[]
 
+    identifier_list=[]
+    identifier_true_list=[]
+
 
     for batch_idx, (data, bag_label,label) in enumerate(test_loader):
         if args.onlypresent:
             data=data.squeeze(0)
+            present_list=[i for i, dat in enumerate(data) if dat[2]==1]
+            label=[label[0][i] for i in present_list]
+
             data=[[dat[0]] for dat in data if dat[2]==1]
+
             data=torch.tensor(data)
+            label=torch.tensor(label)
 
         if len(data)>0:
             # bag_label = label[0]
@@ -346,7 +354,6 @@ def test(PATH):
             else:
                 test_loss += loss
                 y_prob,_ = model.forward(data)
-                # y_prob
                 
             error, predicted_label = model.calculate_classification_error(data, bag_label)
             test_error += error
@@ -360,7 +367,7 @@ def test(PATH):
             else:
                 y_prob_list.append(y_prob.cpu().data)
             
-            if args.model!="set_transformer" and args.onlypresent==False:
+            if args.model!="set_transformer":
                 if predicted_label.cpu().data.numpy()[0][0]==1:
                     attention_array=attention_weights.cpu().data.numpy()[0]
 
@@ -368,93 +375,170 @@ def test(PATH):
                     max_value=max(attention_array)
                     max_attention= [i for i, j in enumerate(attention_array) if j == max_value]
                     total_count+=1
-                    single_labels=instance_labels.numpy()[0].tolist()
+                    if args.onlypresent:
+                        single_labels=instance_labels.numpy().tolist()
+                    else:
+                        single_labels=instance_labels.numpy()[0].tolist()
                     max_attention_list.append(max_attention)
+
                     if single_labels[max_attention[0]]:
                         rightattention_count+=1 
                         
                     attention_array_true_list.append(attention_array)
+                    if args.onlypresent:
+                        identifier_true_list.append(data.cpu().data.numpy().tolist())
+
 
                 #prepare list for instance level ROC
                 attention_array_list.append(attention_weights.cpu().data.numpy()[0].tolist())
-                single_labels_list.append(instance_labels.numpy()[0].tolist())
-
+                if args.onlypresent:
+                    single_labels_list.append(instance_labels.numpy().tolist())
+                else:
+                    single_labels_list.append(instance_labels.numpy()[0].tolist())
+                identifier_list.append(data.cpu().data.numpy().tolist())
             
 
                 if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
                     bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
-                    instance_level = list(zip(instance_labels.numpy()[0].tolist(),
-                                        np.round(attention_weights.cpu().data.numpy()[0], decimals=3).tolist()))
+                    if args.onlypresent:
+                        instance_level = list(zip(instance_labels.numpy().tolist(),
+                                            np.round(attention_weights.cpu().data.numpy(), decimals=3).tolist()))
+                    else:
+                        instance_level = list(zip(instance_labels.numpy()[0].tolist(),
+                                            np.round(attention_weights.cpu().data.numpy()[0], decimals=3).tolist()))
 
                     print('\nTrue Bag Label, Predicted Bag Label: {}\n'
                         'True Instance Labels, Attention Weights: {}'.format(bag_level, instance_level))
         else:
             pass
 
+    # if args.selected_length==20:
+    #     target_mutation=random.sample(range(args.selected_length),3)
+    # elif args.selected_length==200 and args.gene_ind==0:
+    #     target_mutation=[114, 127, 189]
+    # elif args.selected_length==200 and args.gene_ind==1:
+    #     target_mutation=[107, 110, 105]
+    # elif args.selected_length==200 and args.gene_ind==2:
+    #     target_mutation=[78, 107, 169]
+    # elif args.selected_length==200 and args.gene_ind==3:
+    #     target_mutation=[2, 4, 46]
+    # elif args.selected_length==200 and args.gene_ind==4:
+    #     target_mutation=[159, 193, 196]
+    # elif args.selected_length==500 and args.gene_ind==0:
+    #     target_mutation=[198, 201, 191]
+    # elif args.selected_length==500 and args.gene_ind==1:
+    #     target_mutation=[433, 485, 521]
+    # elif args.selected_length==500 and args.gene_ind==2:
+    #     target_mutation=[291, 318, 322]
+    # elif args.selected_length==500 and args.gene_ind==3:
+    #     target_mutation=[171, 173, 247]
+    # elif args.selected_length==500 and args.gene_ind==4:
+    #     target_mutation=[55, 414, 358]       
+           
     if args.selected_length==20:
-        target_mutation=random.sample(range(args.selected_length),3)
+        target_mutation=[1,2,18]
     elif args.selected_length==200 and args.gene_ind==0:
         target_mutation=[114, 127, 189]
     elif args.selected_length==200 and args.gene_ind==1:
-        target_mutation=[107, 110, 105]
+        target_mutation=[116, 117, 118]
     elif args.selected_length==200 and args.gene_ind==2:
-        target_mutation=[78, 107, 169]
+        target_mutation=[175,177,191]
     elif args.selected_length==200 and args.gene_ind==3:
-        target_mutation=[2, 4, 46]
+        target_mutation=[80,87,2]
     elif args.selected_length==200 and args.gene_ind==4:
-        target_mutation=[159, 193, 196]
+        target_mutation=[193, 196, 197]
     elif args.selected_length==500 and args.gene_ind==0:
         target_mutation=[198, 201, 191]
     elif args.selected_length==500 and args.gene_ind==1:
-        target_mutation=[433, 485, 521]
+        target_mutation=[357,406,360]
     elif args.selected_length==500 and args.gene_ind==2:
-        target_mutation=[291, 318, 322]
+        target_mutation=[147, 148, 298]
     elif args.selected_length==500 and args.gene_ind==3:
-        target_mutation=[171, 173, 247]
+        target_mutation=[171, 193, 173]
     elif args.selected_length==500 and args.gene_ind==4:
-        target_mutation=[55, 414, 358]       
-           
+        target_mutation=[220, 222, 210]
 
-    if args.model!="set_transformer":
+    if args.model!="set_transformer" and args.onlypresent==False and len(max_attention_list)>0:
         max_pos_df=pd.DataFrame(np.concatenate(max_attention_list)).groupby([0]).size().sort_values(ascending=False)
         print("------------------------------------------------------------------------")
         print("Max Attention Position Statistics", max_pos_df)
-        attention_true=pd.DataFrame(attention_array_true_list)
+        
+    if args.model!="set_transformer" and args.onlypresent==False: 
+        if len(attention_array_true_list)>0:   
+            attention_true=pd.DataFrame(attention_array_true_list)
+            print("------------------------------------------------------------------------")
+            print("The averaging attention weight by position predicted TRUE bags", pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
+        
         attention_df=pd.DataFrame(attention_array_list)
-        print("------------------------------------------------------------------------")
-        print("The averaging attention weight by position predicted TRUE bags", pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
         print("------------------------------------------------------------------------")
         print("The averaging attention weight by position ALL bags", pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15))
         print("------------------------------------------------------------------------")
 
 
-        SAVING_INSTANCE_PATH=os.getcwd()+"semi_simulation_setting/instance_level_results_lr{}_{}/{}/".format(args.lr, args.model, args.seed)
+        SAVING_INSTANCE_PATH=os.getcwd()+"/semi_simulation_setting/instance_level_results_lr{}_{}_onlypresent{}_withattention_manual_all/".format(args.lr, args.model,args.onlypresent)
         avg_prediciton_truebag_label=[]
         avg_prediciton_allbag_label=[]
-        avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
-        avg_predict_all_bags=pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False).head(15)
-        for i in range(15):
-            if avg_predict_true_bags.index[i] in target_mutation:
-                avg_prediciton_truebag_label.append(True)
-            else:
-                avg_prediciton_truebag_label.append(False)
+        if len(attention_array_true_list)>0:
+            avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False)
+        avg_predict_all_bags=pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False)
+        
+        for i in range(avg_predict_all_bags.shape[0]):
+            if len(attention_array_true_list)>0:
+                if avg_predict_true_bags.index[i] in target_mutation:
+                    avg_prediciton_truebag_label.append(True)
+                else:
+                    avg_prediciton_truebag_label.append(False)
 
             if avg_predict_all_bags.index[i] in target_mutation:
                 avg_prediciton_allbag_label.append(True)
             else:
                 avg_prediciton_allbag_label.append(False)
 
-        avg_predict_true_bags['label']=avg_prediciton_truebag_label
-        avg_predict_all_bags['label']=avg_prediciton_allbag_label
         os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
-        save_file(SAVING_INSTANCE_PATH+"/truebags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length, args.interaction),avg_predict_true_bags)
-        save_file(SAVING_INSTANCE_PATH+"/allbags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length,args.interaction),avg_predict_all_bags)
+        if len(attention_array_true_list)>0:
+            avg_predict_true_bags['label']=avg_prediciton_truebag_label
+            save_file(SAVING_INSTANCE_PATH+"truebags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length, args.interaction),avg_predict_true_bags)
+        
+        avg_predict_all_bags['label']=avg_prediciton_allbag_label
+        save_file(SAVING_INSTANCE_PATH+"allbags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length,args.interaction),avg_predict_all_bags)
 
 
         if total_count==0:
             print('The estimated probability of the right largest attention is',rightattention_count/(total_count+0.000000000001))
         else:
             print('The estimated probability of the right largest attention is',rightattention_count/total_count)
+
+    if args.onlypresent:
+        SAVING_INSTANCE_PATH=os.getcwd()+"/semi_simulation_setting/instance_level_results_lr{}_{}_onlypresent{}_withattention_manual_all/".format(args.lr, args.model,args.onlypresent)
+        os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
+
+        predict_all_bags=pd.DataFrame(np.concatenate(attention_array_list))
+        predict_all_bags['identifier']=np.concatenate(identifier_list)
+        predict_all_bags_mean=predict_all_bags.groupby(['identifier']).mean()
+        identifier_labels=[]
+        for i in range(predict_all_bags_mean.shape[0]):
+            if i in target_mutation:
+                label=True
+            else:
+                label=False
+            identifier_labels.append(label)
+        predict_all_bags_mean['labels']=identifier_labels
+
+        if len(attention_array_true_list):
+            predict_true_bags=pd.DataFrame(np.concatenate(attention_array_true_list))
+            predict_true_bags['identifier']=np.concatenate(identifier_true_list)
+            predict_true_bags_mean=predict_true_bags.groupby(['identifier']).mean()
+            identifier_true_labels=[]
+            for j in range(predict_true_bags_mean.shape[0]):
+                if j in target_mutation:
+                    label=True
+                else:
+                    label=False
+                identifier_true_labels.append(label)
+
+            predict_true_bags_mean['label']=identifier_true_labels
+            save_file(SAVING_INSTANCE_PATH+"truebags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length,args.interaction),predict_true_bags_mean)
+        save_file(SAVING_INSTANCE_PATH+"allbags_geneind{}_snplength{}_i{}.pkl".format(args.gene_ind,args.selected_length,args.interaction),predict_all_bags_mean)
 
 
     print('confusion matrix:',confusion_matrix(np.concatenate(true_label_list), np.concatenate(pred_label_list)))
@@ -471,6 +555,8 @@ def test(PATH):
 
     precision, recall, thresholds_prc = precision_recall_curve(np.concatenate(true_label_list), np.concatenate(y_prob_list))
     prc_avg = average_precision_score(np.concatenate(true_label_list),np.concatenate(y_prob_list))
+
+
 
     if args.model!="set_transformer" and args.onlypresent==False:
         # Matrics and plots instance level
@@ -583,10 +669,10 @@ def test(PATH):
 
 
     # plt.show()
-    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
+    SAVING_PATH=os.getcwd()+'/semi_simulation_setting/plots_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance_manual_all/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
     os.makedirs(SAVING_PATH, exist_ok=True)
 
-    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
+    EVALUATION_SAVINGPATH=os.getcwd()+'/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance_manual_all/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
     os.makedirs(EVALUATION_SAVINGPATH, exist_ok=True)
 
 
@@ -604,7 +690,7 @@ if __name__ == "__main__":
     print('Start Training')
     print('training weight:', bag_class_weight_train)
     working_dir=os.getcwd() 
-    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
+    PATH=working_dir+'/semi_simulation_setting/checkpoints_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance_manual_all/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)
 
     os.makedirs(PATH, exist_ok=True)
 
@@ -622,8 +708,8 @@ if __name__ == "__main__":
 
         scheduler.step(val_loss)
 
-        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/".format(args.lr,args.model,args.selected_length)+ str(args.gene_ind), exist_ok=True)
-        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)+'/gene_ind{}_i{}_snplength{}'.format(args.gene_ind,args.interaction,args.selected_length))
+        os.makedirs("./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance_manual_all/".format(args.lr,args.model,args.selected_length)+ str(args.gene_ind), exist_ok=True)
+        writer = SummaryWriter('./semi_simulation_setting/tensorboard_logs_bedreader_leakyrelu_reduceplateu_lr{}_twostep_MLP_upsampling_attweight_{}_snplength{}_alogpick_withinstance_manual_all/'.format(args.lr,args.model,args.selected_length)+ str(args.gene_ind)+'/gene_ind{}_i{}_snplength{}'.format(args.gene_ind,args.interaction,args.selected_length))
 
         writer.add_scalar('training loss',
                             train_loss/ epoch, epoch)

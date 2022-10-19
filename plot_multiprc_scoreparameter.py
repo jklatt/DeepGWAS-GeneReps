@@ -5,7 +5,28 @@ import pickle
 import os
 import numpy as np
 #change the seeds accodringly!!!
-ploting_snp="20"
+ploting_snp="200"
+setting="toy" #"semi"
+attention_mec="attention_onlypresent"
+
+if setting=="toy":
+    if attention_mec=="attention":
+        path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_fixedSNPtype_onlypresentFalse_withattention_all/"
+        saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_attention_weightedfixed_withattetion_forwardfill_allentries/"
+    elif attention_mec=="gated_attention":
+        path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_fixedSNPtype_onlypresentFalse_withattention_all/"
+        saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_gated_attention_weightedfixed_withattetion_forwardfill_allentries/"
+
+    elif attention_mec=="gated_attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_fixedSNPtype_onlypresentTrue_withattention_all/"
+        saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_gated_attention_onlypresent_weightedfixed_withattetion_forwardfill_allentries/"
+    elif attention_mec=="attention_onlypresent":
+        path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_fixedSNPtype_onlypresentTrue_withattention_all/"
+        saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_attention_onlypresent_weightedfixed_withattetion_forwardfill_allentries/"
+
+
+
+
 def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter, path):
     # extracting max_present dictionary
     evaluation_scores_true={}
@@ -90,34 +111,34 @@ seeds=range(1,6)
 selected_seed=range(1,6)
 if ploting_snp=="20":
     #snp20
-    criteria1_base="nsnp20"
+    criteria1_base="nsnp20_"
     criteria2_base="csnp3"
     criteria3_base="max1.0"
     criteria4_base="prevalence0.35"
 elif ploting_snp=="200":
     #snp200
-    criteria1_base="nsnp200"
+    criteria1_base="nsnp200_"
     criteria2_base="csnp3"
     criteria3_base="max0.8"
     criteria4_base="prevalence0.35"
 
 elif ploting_snp=="100":
     #snp100
-    criteria1_base="nsnp100"
+    criteria1_base="nsnp100_"
     criteria2_base="csnp3"
     criteria3_base="max0.95"
     criteria4_base="prevalence0.35"
 
 elif ploting_snp=="50":
     #snp50
-    criteria1_base="nsnp50"
+    criteria1_base="nsnp50_"
     criteria2_base="csnp3"
     criteria3_base="max1.0"
     criteria4_base="prevalence0.35"
 
 elif ploting_snp=="150":
     #snp150
-    criteria1_base="nsnp150"
+    criteria1_base="nsnp150_"
     criteria2_base="csnp3"
     criteria3_base="max0.9"
     criteria4_base="prevalence0.35"
@@ -130,8 +151,11 @@ elif ploting_snp=="150":
 # path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_fixedSNPtype_onlypresentFalse_withattention/"
 # path="/home/zixshu/DeepGWAS/baseline/metrics_correctbaseline/"
 # path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_fixedSNPtype_onlypresentTrue/"
+# path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_fixedSNPtype_onlypresentFalse_withattention/"
 
-path="/home/zixshu/DeepGWAS/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_fixedSNPtype_onlypresentFalse_withattention/"
+
+
+
 reference_setting={}
 calculating_avg={}
 for seed in selected_seed:
@@ -146,20 +170,24 @@ for seed in selected_seed:
 
 def forward_filling(new_list1, list1, list2):
     filled_list1=[[]]*len(new_list1)
-    compared_ind=0
-    # filled_list1[0]=list2[0]
-    for i in range(0,len(new_list1)):
-        greater_list=list1>new_list1[i]
-        greater_ind=[i for i, x in enumerate(greater_list) if x]
-        if len(greater_ind)>0:
-            if greater_ind[0]>=1 :
-                filled_list1[i]=list2[greater_ind[0]-1]
-            else:
-                filled_list1[i]=list2[0]
-        else:
-            filled_list1[i]=list2[-1]
-    return filled_list1
 
+    for i in range(0,len(new_list1)):
+        if i==0:
+            filled_list1[i]=list2[0]
+
+        if i==(len(new_list1)-1):
+            filled_list1[i]=list2[-1]
+        else:
+            greater_list=list1>new_list1[i]
+            greater_ind=[i for i, x in enumerate(greater_list) if x]
+            if len(greater_ind)>0:
+                # if greater_ind[0]>=1 :
+                filled_list1[i]=list2[min(greater_ind)-1]
+            # else:
+            #     filled_list1[i]=list2[-1]
+    # print(min(filled_list1))
+    # print(max(filled_list1))
+    return filled_list1
 
 # seed1 164 true
 #seed1 201 false?
@@ -175,16 +203,14 @@ for seed in selected_seed:
             with open(FILE_PATH, "rb") as f:
                     standard_seting=pickle.load(f)
 
-            if "True" in file:
+            if "iTrue" in file:
                 #interporating the line on graph
-                min_pre,max_pre=standard_seting['precision_bag'][0],  max(standard_seting['precision_bag'])
-                min_recall,max_recall=1, min(standard_seting['recall_bag'])
+                min_pre,max_pre=standard_seting['precision_bag'][0],  standard_seting['precision_bag'][-1]
+                min_recall,max_recall=standard_seting['recall_bag'][0], standard_seting['recall_bag'][-1]
                 new_a1_x = np.linspace(min_pre, max_pre, 1000)
                 new_a2_x = np.linspace(min_recall, max_recall, 1000)
-                # new_a1_y = np.interp(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
-                # new_a2_y = np.interp(new_a2_x, np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
-                
-                new_a1_y = forward_filling(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
+
+                # new_a1_y = forward_filling(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
                 if standard_seting['recall_bag'][0]-standard_seting['recall_bag'][-1]>0:
                     new_a2_y = forward_filling(np.flip(new_a2_x), np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
                     calculating_avg[seed]["interaction_true"]['precision']=np.flip(new_a2_y)
@@ -192,7 +218,8 @@ for seed in selected_seed:
                     new_a2_y = forward_filling(new_a2_x, standard_seting['recall_bag'], standard_seting['precision_bag'])
                     calculating_avg[seed]["interaction_true"]['precision']=new_a2_y
 
-                calculating_avg[seed]["interaction_true"]['recall']=new_a1_y
+                calculating_avg[seed]["interaction_true"]['recall']=new_a2_x
+                # calculating_avg[seed]["interaction_true"]['recall']=new_a1_y
                 reference_setting[seed]["interaction_true"]['precision']=standard_seting['precision_bag']
                 reference_setting[seed]["interaction_true"]['recall']=standard_seting['recall_bag']
                 reference_setting[seed]["interaction_true"]['prc_avg']=standard_seting['prc_avg_bag']
@@ -200,10 +227,10 @@ for seed in selected_seed:
             else:
                 #interporating the line on graph
                 min_pre,max_pre=standard_seting['precision_bag'][0], standard_seting['precision_bag'][-1]
-                min_recall,max_recall=standard_seting['recall_bag'][0], standard_seting['recall_bag'][-1]
+                fisrt_recall,last_recall= standard_seting['recall_bag'][0], standard_seting['recall_bag'][-1]
                 new_a1_x = np.linspace(min_pre, max_pre, 1000)
-                new_a2_x = np.linspace(min_recall, max_recall, 1000)
-                new_a1_y = forward_filling(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
+                new_a2_x = np.linspace(fisrt_recall, last_recall, 1000)
+                # new_a1_y = forward_filling(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
 
                 if standard_seting['recall_bag'][0]-standard_seting['recall_bag'][-1]>0:
                     new_a2_y =forward_filling(np.flip(new_a2_x), np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
@@ -212,9 +239,9 @@ for seed in selected_seed:
                     new_a2_y = forward_filling(new_a2_x, standard_seting['recall_bag'], standard_seting['precision_bag'])
                     calculating_avg[seed]["interaction_false"]['precision']=new_a2_y
                 
-                # new_a2_y = np.interp(new_a2_x, np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
-                # calculating_avg[seed]["interaction_false"]['precision']=np.flip(new_a2_y)
-                calculating_avg[seed]["interaction_false"]['recall']=new_a1_y 
+
+                calculating_avg[seed]["interaction_false"]['recall']=new_a2_x
+                # calculating_avg[seed]["interaction_false"]['recall']=new_a1_y 
                 reference_setting[seed]["interaction_false"]['precision']=standard_seting['precision_bag']
                 reference_setting[seed]["interaction_false"]['recall']=standard_seting['recall_bag']
                 reference_setting[seed]["interaction_false"]['prc_avg']=standard_seting['prc_avg_bag']
@@ -501,7 +528,7 @@ elif ploting_snp=="150":
     criteriapre2="csnp3" 
     criteriapre3="max0.9"
 
-saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_gated_attention_weightedfixed_withattetion_forwardfill/"
+
 # saving_path="/home/zixshu/DeepGWAS/baseline_toy_setting_plots/"
 os.makedirs(saving_path,exist_ok=True)
 ploting_outputs(seeds, criteria1_base,criteria2_base, criteria3_base,criteria4_base,criteriasnp1, criteriasnp2, criteriasnp3, criteriamax1, criteriamax2, criteriamax3, criteriapre1, criteriapre2, criteriapre3, variating_parameters, path, get_avg_dic, reference_setting,calculating_avg,saving_path)
