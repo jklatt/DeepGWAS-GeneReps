@@ -21,7 +21,7 @@ from sklearn.model_selection import train_test_split
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch GWAS Toy')
-parser.add_argument('--epochs', type=int, default=500,)
+parser.add_argument('--epochs', type=int, default=1,)
 parser.add_argument('--lr', type=float, default=0.0005,
                     help='learning rate (default: 0.0005)')
 parser.add_argument('--reg', type=float, default=10e-5,
@@ -34,14 +34,14 @@ parser.add_argument('--seed', type=int, default=2,
                     help='random seed (default: 1)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--model', type=str, default='attention', help='Choose b/w attention and gated_attention')
+parser.add_argument('--model', type=str, default='attention_onlypresent', help='Choose b/w attention and gated_attention')
 parser.add_argument('-int','--interaction',type=int,default=0,  help='if assume there is interaction between casual SNP')
 parser.add_argument('-osampling','--oversampling',type=bool,default=True, help='if using upsampling in training')
 parser.add_argument('-wloss','--weight_loss',type=bool,default=True, help='if using weighted loss in training')
 parser.add_argument('--non_causal',type=int,default=0, help='if we want to set casual snp in bag')
-parser.add_argument('--selected_length',type=int,default=500, help='selected length from nature data')
-parser.add_argument('--gene_ind',type=int,default=4, help='selected gene index')
-parser.add_argument('--onlypresent',type=int,default=0, help='only present indentifier model')
+parser.add_argument('--selected_length',type=int,default=20, help='selected length from nature data')
+parser.add_argument('--gene_ind',type=int,default=1, help='selected gene index')
+parser.add_argument('--onlypresent',type=int,default=1, help='only present indentifier model')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 print(args)
@@ -509,12 +509,16 @@ def test(PATH):
             print('The estimated probability of the right largest attention is',rightattention_count/total_count)
 
     if args.onlypresent:
-        SAVING_INSTANCE_PATH=os.getcwd()+"/semi_simulation_setting/instance_level_results_lr{}_{}_onlypresent{}_withattention_manual_all/".format(args.lr, args.model,args.onlypresent)
+        SAVING_INSTANCE_PATH=os.getcwd()+"/semi_simulation_setting/instance_level_results_lr{}_{}_onlypresent{}_withattention_manual_all_test/".format(args.lr, args.model,args.onlypresent)
         os.makedirs(SAVING_INSTANCE_PATH,exist_ok=True)
 
         predict_all_bags=pd.DataFrame(np.concatenate(attention_array_list))
         predict_all_bags['identifier']=np.concatenate(identifier_list)
+        print(predict_all_bags)
         predict_all_bags_mean=predict_all_bags.groupby(['identifier']).mean()
+        print(predict_all_bags_mean)
+
+
         identifier_labels=[]
         for i in range(predict_all_bags_mean.shape[0]):
             if i in target_mutation:
@@ -523,6 +527,8 @@ def test(PATH):
                 label=False
             identifier_labels.append(label)
         predict_all_bags_mean['labels']=identifier_labels
+
+        prc_avg = average_precision_score(predict_all_bags_mean['labels'],predict_all_bags_mean[0])
 
         if len(attention_array_true_list):
             predict_true_bags=pd.DataFrame(np.concatenate(attention_array_true_list))

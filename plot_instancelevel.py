@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve, average_precision_score
 
 seeds=range(1,6)
-ploting_snp=20
+ploting_snp=200
 criteria_bag="allbags_"
 # criteria_bag="truebags"
 

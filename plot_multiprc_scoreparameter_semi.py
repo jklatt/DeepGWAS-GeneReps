@@ -3,9 +3,9 @@ import pickle
 import os
 import numpy as np
 
-ploting_length=20
-# models=["attention","gated attention"]
-models=["attention present","gated attention present"]
+ploting_length=200
+models=["attention","gated attention"]
+# models=["attention present","gated attention present"]
 def interporating(evaluation_scores_true, gene,variable1, variable2):
     new_a1_x = np.linspace(evaluation_scores_true[gene][variable1][0], evaluation_scores_true[gene][variable1][-1], 1000)
     new_a2_x = np.linspace(evaluation_scores_true[gene][variable2][0], evaluation_scores_true[gene][variable2][-1],1000)
@@ -49,9 +49,9 @@ def evaluation_dic_generation(model,ploting_length):
             # path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_snplength200_alogpick_withinstance/"    
             path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_snplength200_alogpick_withinstance_manual_all/"  
         elif model=="attention present":
-            path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_snplength200_alogpick_withinstance/"
+            path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_snplength200_alogpick_withinstance_manual_all/"
         elif model=="gated attention present":
-            path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength200_alogpick_withinstance/"
+            path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength200_alogpick_withinstance_manual_all/"
         gene_name_list=['AT2G14030', 'AT3G26240', 'AT3G26260', 'AT3G31005', 'AT5G45060']
 
     elif ploting_length==500:
@@ -247,7 +247,7 @@ axis.set_ylim([0, 1.02])
 
 
 os.makedirs("/home/zixshu/DeepGWAS/semi_simulation_setting_plots",exist_ok=True)
-SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_manual_presentsnp_together_comparingmodel.png".format(str(ploting_length))
+SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_manual_allsnp_together_comparingmodel.png".format(str(ploting_length))
 plt.savefig(SAVING_PATH)
 
 # # figure, axis = plt.subplots(1, 2, figsize=(7, 7))

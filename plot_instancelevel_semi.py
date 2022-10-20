@@ -73,19 +73,19 @@ def evaluation_dic_generation(model,ploting_length):
     
         for file in filenames:
             if ploting_length==20:
-                criteria_length=str(20)               
+                criteria_length="20_"               
             elif ploting_length==200:
-                criteria_length=str(200)
+                criteria_length="200_"
             elif ploting_length==500:
                 criteria_length=str(500)
                         
             
-            if 'iTrue' in file and (criteria_bag in file)and ("geneind"+str(gene) in file) and criteria_length in file:
+            if 'iTrue' in file and (criteria_bag in file)and ("geneind"+str(gene) in file) and (criteria_length in file):
                 FILE_PATH=PATH+'/'+file
                 with open(FILE_PATH, "rb") as f:
                     evaluation_dict=pickle.load(f)
 
-                if "present" in model:
+                if ("present" in model) and (criteria_bag=="allbags_"):
                     labels=evaluation_dict['labels']
                 else:
                     labels=evaluation_dict['label']
@@ -101,17 +101,18 @@ def evaluation_dic_generation(model,ploting_length):
                 # evaluation_scores_true[gene_name]['fpr']=evaluation_dict['fpr_bag']
                 # evaluation_scores_true[gene_name]['tpr']=evaluation_dict['tpr_bag']
                 # evaluation_scores_true[gene_name]['roc_auc']=evaluation_dict['roc_auc_bag']
-            elif 'iFalse' in file and (criteria_bag in file)and ("geneind"+str(gene) in file) and criteria_length in file:
+            elif 'iFalse' in file and (criteria_bag in file)and ("geneind"+str(gene) in file) and (criteria_length in file):
                 FILE_PATH=PATH+'/'+file
                 with open(FILE_PATH, "rb") as f:
                     evaluation_dict=pickle.load(f)
-                if "present" in model:
+                if ("present" in model) and (criteria_bag=="allbags_"):
                     labels=evaluation_dict['labels']
                 else:
                     labels=evaluation_dict['label']
 
                 attention_weights=evaluation_dict[0]
                 precision, recall, thresholds_prc = precision_recall_curve(labels, attention_weights)
+                # print(evaluation_dict)
                 prc_avg = average_precision_score(labels,attention_weights)
                 evaluation_scores_false[gene_name]={}
                 evaluation_scores_false[gene_name]['prc_avg']=prc_avg
@@ -215,8 +216,6 @@ def evaluation_dic_generation(model,ploting_length):
 
 
 
-figure, axis = plt.subplots(1, 1, figsize=(7, 7))
-figure.suptitle("semi simulation setting with selected gene length{}".format(str(ploting_snp)))
 
 for model in models:
     interporated_score=evaluation_dic_generation(model,ploting_snp)   
@@ -233,6 +232,9 @@ for model in models:
     prc_false_line_sd.append(interporated_score['false'][model]['prc_std'])
 
 #TODO: PLOTING FOR PRC LINE AND CHECK IF THE PERFORMANCE IS THIS BAD COMPARED TO THE TOY EXAMPLE.
+
+figure, axis = plt.subplots(1, 1, figsize=(7, 7))
+figure.suptitle("semi simulation setting with selected gene length{}".format(str(ploting_snp)))
 
 x = np.array(range(len(models)))
 axis.set_xticks(x, models)

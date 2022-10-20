@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 import numpy as np
+from numpy import interp
 #change the seeds accodringly!!!
 ploting_snp="200"
 setting="toy" #"semi"
@@ -213,8 +214,11 @@ for seed in selected_seed:
                 # new_a1_y = forward_filling(new_a1_x, standard_seting['precision_bag'], standard_seting['recall_bag'])
                 if standard_seting['recall_bag'][0]-standard_seting['recall_bag'][-1]>0:
                     new_a2_y = forward_filling(np.flip(new_a2_x), np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
+                    # new_a2_y = interp(np.flip(new_a2_x), np.flip(standard_seting['recall_bag']),np.flip(standard_seting['precision_bag']))
+                    
                     calculating_avg[seed]["interaction_true"]['precision']=np.flip(new_a2_y)
                 else:
+                    # new_a2_y = interp(new_a2_x, standard_seting['recall_bag'], standard_seting['precision_bag'])
                     new_a2_y = forward_filling(new_a2_x, standard_seting['recall_bag'], standard_seting['precision_bag'])
                     calculating_avg[seed]["interaction_true"]['precision']=new_a2_y
 
