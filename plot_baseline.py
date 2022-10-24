@@ -175,7 +175,6 @@ interporated_score['false']['std_tpr']=np.std(np.array(tpr_false),axis=0)
 
 
 
-
 figure, axis = plt.subplots(1, 2, figsize=(7, 7))
 figure.suptitle("control setting w interation baseline")
 # for seed in seeds:

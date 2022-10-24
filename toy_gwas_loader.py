@@ -215,8 +215,11 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
    
         if interaction:
-            num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
-            present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+            num_snp_present=random.choices(range(0,max_present+1),k=1)[0]
+            if num_snp_present==0:
+                present_list=[0]*gene_length
+            else:
+                present_list=gen_binary_list_non_all_mutation_one(gene_length,target_mutation_pos, num_snp_present)
             actual_present=present_list.count(1)
 
             bag_label_check=[present_list[i] for i in target_mutation_pos]
@@ -226,10 +229,14 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
         
         else:
             if (max_present+len(target_mutation_pos))>gene_length:
-                num_snp_present=random.choices(range(1,gene_length+1-len(target_mutation_pos)),k=1)[0]
+                num_snp_present=random.choices(range(0,gene_length+1-len(target_mutation_pos)),k=1)[0]
             else:
-                num_snp_present=random.choices(range(1,max_present+1),k=1)[0]
-            present_list=gen_binary_list_non_mutation_one(gene_length,target_mutation_pos, num_snp_present)
+                num_snp_present=random.choices(range(0,max_present+1),k=1)[0]
+
+            if num_snp_present==0:
+                present_list=[0]*gene_length
+            else:
+                present_list=gen_binary_list_non_mutation_one(gene_length,target_mutation_pos, num_snp_present)
             actual_present=present_list.count(1)
 
             bag_label_check=[present_list[i] for i in target_mutation_pos]
@@ -354,7 +361,7 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 # interaction=False
 
 
-# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=interaction,non_causal=1)
+# train_data_list, train_bag_label_list, train_label_list, test_data_list, test_bag_label_list,test_label_list,val_data_list,valid_label_list,val_bag_label_list,target_mutation_pos=generate_samples_prev(gene_length, max_present ,num_casual_snp, num_genes_train,num_genes_test, prevalence, interaction=interaction,non_causal=1)
 
 # print(train_data_list[0])
 # print(test_data_list[0])

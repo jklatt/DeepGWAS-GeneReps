@@ -3,9 +3,9 @@ import pickle
 import os
 import numpy as np
 
-ploting_length=200
-models=["attention","gated attention"]
-# models=["attention present","gated attention present"]
+ploting_length=500
+# models=["attention","gated attention","baseline"]
+models=["attention present","gated attention present","baseline"]
 def interporating(evaluation_scores_true, gene,variable1, variable2):
     new_a1_x = np.linspace(evaluation_scores_true[gene][variable1][0], evaluation_scores_true[gene][variable1][-1], 1000)
     new_a2_x = np.linspace(evaluation_scores_true[gene][variable2][0], evaluation_scores_true[gene][variable2][-1],1000)
@@ -38,6 +38,8 @@ def evaluation_dic_generation(model,ploting_length):
         elif model=="gated attention present":
             path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength20_alogpick_withinstance_manual_all/"
             # path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength20_alogpick_withinstance/"
+        elif model=="baseline":
+            path="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_logistic_manual_all/"
         gene_name_list=['AT5G48440','AT3G52970', 'AT2G36570','AT4G10350', 'AT2G16676']
 
 
@@ -52,6 +54,8 @@ def evaluation_dic_generation(model,ploting_length):
             path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_attention_onlypresent_snplength200_alogpick_withinstance_manual_all/"
         elif model=="gated attention present":
             path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength200_alogpick_withinstance_manual_all/"
+        elif model=="baseline":
+            path="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_logistic_manual_all/"
         gene_name_list=['AT2G14030', 'AT3G26240', 'AT3G26260', 'AT3G31005', 'AT5G45060']
 
     elif ploting_length==500:
@@ -68,6 +72,8 @@ def evaluation_dic_generation(model,ploting_length):
         elif model=="gated attention present":
             path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength500_alogpick_withinstance_manual_all/"
             # path="/home/zixshu/DeepGWAS/semi_simulation_setting/metrics_bedreader_leakyrelu_reduceplateu_lr0.0005_twostep_MLP_upsampling_attweight_gated_attention_onlypresent_snplength500_alogpick_withinstance/"
+        elif model=="baseline":
+            path="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_logistic_manual_all/"
         gene_name_list=['AT1G43060', 'AT1G58602', 'AT4G19490', 'AT5G24740', 'AT5G32690']
 
     genes=range(5)
@@ -85,24 +91,45 @@ def evaluation_dic_generation(model,ploting_length):
             with open(FILE_PATH, "rb") as f:
                 evaluation_dict=pickle.load(f)
 
-            if 'iTrue' in file:
-                evaluation_scores_true[gene_name]={}
-                evaluation_scores_true[gene_name]['roc_auc']=evaluation_dict['roc_auc_bag']
-                evaluation_scores_true[gene_name]['prc_avg']=evaluation_dict['prc_avg_bag']
-                evaluation_scores_true[gene_name]['fpr']=evaluation_dict['fpr_bag']
-                evaluation_scores_true[gene_name]['tpr']=evaluation_dict['tpr_bag']
-                evaluation_scores_true[gene_name]['precision']=evaluation_dict['precision_bag']
-                evaluation_scores_true[gene_name]['recall']=evaluation_dict['recall_bag']
 
+            if model=="baseline":
+                if "iTrue" in file:
+                    evaluation_scores_true[gene_name]={}
+                    evaluation_scores_true[gene_name]['precision']=evaluation_dict['precision']
+                    evaluation_scores_true[gene_name]['recall']=evaluation_dict['recall']
+                    evaluation_scores_true[gene_name]['fpr']=evaluation_dict['fpr']
+                    evaluation_scores_true[gene_name]['tpr']=evaluation_dict['tpr']
+                    evaluation_scores_true[gene_name]['roc_auc']=evaluation_dict['roc_auc']
+                    evaluation_scores_true[gene_name]['prc_avg']=evaluation_dict['prc_avg']
+                else:
+                    evaluation_scores_false[gene_name]={}
+                    evaluation_scores_false[gene_name]['precision']=evaluation_dict['precision']
+                    evaluation_scores_false[gene_name]['recall']=evaluation_dict['recall']
+                    evaluation_scores_false[gene_name]['fpr']=evaluation_dict['fpr']
+                    evaluation_scores_false[gene_name]['tpr']=evaluation_dict['tpr']
+                    evaluation_scores_false[gene_name]['roc_auc']=evaluation_dict['roc_auc']
+                    evaluation_scores_false[gene_name]['prc_avg']=evaluation_dict['prc_avg']
 
             else:
-                evaluation_scores_false[gene_name]={}
-                evaluation_scores_false[gene_name]['roc_auc']=evaluation_dict['roc_auc_bag']
-                evaluation_scores_false[gene_name]['prc_avg']=evaluation_dict['prc_avg_bag']
-                evaluation_scores_false[gene_name]['fpr']=evaluation_dict['fpr_bag']
-                evaluation_scores_false[gene_name]['tpr']=evaluation_dict['tpr_bag']
-                evaluation_scores_false[gene_name]['precision']=evaluation_dict['precision_bag']
-                evaluation_scores_false[gene_name]['recall']=evaluation_dict['recall_bag']
+
+                if 'iTrue' in file:
+                    evaluation_scores_true[gene_name]={}
+                    evaluation_scores_true[gene_name]['roc_auc']=evaluation_dict['roc_auc_bag']
+                    evaluation_scores_true[gene_name]['prc_avg']=evaluation_dict['prc_avg_bag']
+                    evaluation_scores_true[gene_name]['fpr']=evaluation_dict['fpr_bag']
+                    evaluation_scores_true[gene_name]['tpr']=evaluation_dict['tpr_bag']
+                    evaluation_scores_true[gene_name]['precision']=evaluation_dict['precision_bag']
+                    evaluation_scores_true[gene_name]['recall']=evaluation_dict['recall_bag']
+
+
+                else:
+                    evaluation_scores_false[gene_name]={}
+                    evaluation_scores_false[gene_name]['roc_auc']=evaluation_dict['roc_auc_bag']
+                    evaluation_scores_false[gene_name]['prc_avg']=evaluation_dict['prc_avg_bag']
+                    evaluation_scores_false[gene_name]['fpr']=evaluation_dict['fpr_bag']
+                    evaluation_scores_false[gene_name]['tpr']=evaluation_dict['tpr_bag']
+                    evaluation_scores_false[gene_name]['precision']=evaluation_dict['precision_bag']
+                    evaluation_scores_false[gene_name]['recall']=evaluation_dict['recall_bag']
 
 
         #interporating the lines
@@ -206,6 +233,7 @@ figure.suptitle("semi simulation setting with selected gene length{}".format(str
     # axis[0].plot(evaluation_scores_true[gene]['fpr_inter'],evaluation_scores_true[gene]['tpr_inter'],label="{} AUC=".format(gene)+str(round(evaluation_scores_true[gene]['roc_auc'],3)))
     # axis[1].plot(evaluation_scores_true[gene]['recall_inter'], evaluation_scores_true[gene]['precision_inter'],label="{} AUC=".format(gene)+str(round(evaluation_scores_true[gene]['prc_avg'],3)))
 for model in models:
+
     interporated_score=evaluation_dic_generation(model,ploting_length)   
     # axis[0].plot(interporated_score['true']['avg_fpr'], interporated_score['true']['avg_tpr'],label="w.i {}".format(model))
     # axis[0].fill_between(x=interporated_score['true']['avg_fpr'],y1=np.add(np.array(interporated_score['true']['avg_tpr']), np.array(interporated_score['true']['std_tpr'])), y2=np.subtract(np.array(interporated_score['true']['avg_tpr']),np.array(interporated_score['true']['std_tpr'])),alpha=0.2)
@@ -247,7 +275,7 @@ axis.set_ylim([0, 1.02])
 
 
 os.makedirs("/home/zixshu/DeepGWAS/semi_simulation_setting_plots",exist_ok=True)
-SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_manual_allsnp_together_comparingmodel.png".format(str(ploting_length))
+SAVING_PATH="/home/zixshu/DeepGWAS/semi_simulation_setting_plots/plot_snplength{}_manual_presentsnp_together_comparingmodel.png".format(str(ploting_length))
 plt.savefig(SAVING_PATH)
 
 # # figure, axis = plt.subplots(1, 2, figsize=(7, 7))
