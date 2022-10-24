@@ -528,7 +528,7 @@ def test(PATH):
             identifier_labels.append(label)
         predict_all_bags_mean['labels']=identifier_labels
 
-        prc_avg = average_precision_score(predict_all_bags_mean['labels'],predict_all_bags_mean[0])
+        # prc_avg = average_precision_score(predict_all_bags_mean['labels'],predict_all_bags_mean[0])
 
         if len(attention_array_true_list):
             predict_true_bags=pd.DataFrame(np.concatenate(attention_array_true_list))

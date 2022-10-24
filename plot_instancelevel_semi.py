@@ -114,6 +114,7 @@ def evaluation_dic_generation(model,ploting_length):
                 precision, recall, thresholds_prc = precision_recall_curve(labels, attention_weights)
                 # print(evaluation_dict)
                 prc_avg = average_precision_score(labels,attention_weights)
+                print(evaluation_dict)
                 evaluation_scores_false[gene_name]={}
                 evaluation_scores_false[gene_name]['prc_avg']=prc_avg
                 evaluation_scores_false[gene_name]['precision']=precision

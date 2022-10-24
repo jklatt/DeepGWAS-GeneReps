@@ -333,7 +333,7 @@ def test(PATH):
     y_prob_list=[]
     attention_array_true_list=[]
     max_attention_list=[]
-    # single_labels_true_list=[]
+
     identifier_list=[]
     identifier_true_list=[]
 
@@ -364,7 +364,6 @@ def test(PATH):
         else:
             test_loss += loss
             y_prob,_ = model.forward(data)
-            # y_prob
             
         error, predicted_label = model.calculate_classification_error(data, bag_label)
         test_error += error
@@ -409,8 +408,6 @@ def test(PATH):
             identifier_list.append(data.cpu().data.numpy().tolist())
 
 
-           
-
             if batch_idx < 5:  # plot bag labels and instance labels for first 5 bags
                 bag_level = (bag_label.cpu().data.numpy()[0], int(predicted_label.cpu().data.numpy()[0][0]))
                 if args.onlypresent:
@@ -450,7 +447,6 @@ def test(PATH):
         avg_prediciton_allbag_label=[]
         if len(attention_array_true_list)>0:
             avg_predict_true_bags=pd.DataFrame(attention_true.mean(axis=0)).sort_values(by=[0], ascending=False)
-
         avg_predict_all_bags=pd.DataFrame(attention_df.mean(axis=0)).sort_values(by=[0], ascending=False)
 
         for i in range(avg_predict_all_bags.shape[0]):
@@ -500,7 +496,6 @@ def test(PATH):
 
         if len(attention_array_true_list):
             predict_true_bags=pd.DataFrame(np.concatenate(attention_array_true_list))
-            # predict_true_bags['label']=np.concatenate(single_labels_true_list)
             predict_true_bags['identifier']=np.concatenate(identifier_true_list)
             predict_true_bags_mean=predict_true_bags.groupby(['identifier']).mean()
             identifier_true_labels=[]

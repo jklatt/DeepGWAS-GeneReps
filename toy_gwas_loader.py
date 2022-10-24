@@ -159,7 +159,6 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
 
             actual_present=present_list.count(1)
 
-
             bag_label_check=[present_list[i] for i in target_mutation_pos]
             bag_label=all(bag_label_check)
             casualsnp_freq_true=bag_label_check.count(1)
@@ -238,8 +237,6 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
             casualsnp_freq_false=bag_label_check.count(1)
             
         for index in range(gene_length):
-            
-
             values=values_list[index]
             item= [[index,values,present_list[index]]]
             data[index]=item
@@ -268,8 +265,6 @@ def generate_samples_prev(gene_length, max_present,num_casual_snp, num_genes_tra
     print("------Table of casual SNP present stats false bag-----", pd.DataFrame(np.concatenate(causal_ind_list_false),columns =['causal_ind']).groupby(['causal_ind']).size())
     print("------Frequency of casual SNP in False bag------",pd.DataFrame(casualsnp_freq_list_false).describe())    
     print("------Actual number of SNP present False bag-------", pd.DataFrame(np.array(actual_present_false)/gene_length).describe())
-
-
 
 
     #Combine the true and false back then shuffle them

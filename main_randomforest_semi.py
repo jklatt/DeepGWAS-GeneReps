@@ -146,7 +146,7 @@ roc_auc = auc(fpr, tpr)
 precision, recall, thresholds_prc = precision_recall_curve(bag_label_test, prediction_prob)
 prc_avg = average_precision_score(bag_label_test, prediction_prob)
 
-SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_{}/{}/".format(args.model, args.gene_ind)
+SAVING_METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_{}_manual_all/{}/".format(args.model, args.gene_ind)
 os.makedirs(SAVING_METRIC_PATH, exist_ok=True)
 EVALUATION_PATH=SAVING_METRIC_PATH+'evaluation_score_selectedlength{}_i{}.pkl'.format(args.selected_length,args.interaction)
 evaluation_dict={}
@@ -182,7 +182,7 @@ axis[1].set_ylabel('Precision')
 axis[1].axhline(y=0.35, color='grey', linestyle='dotted')
 plt.tight_layout()
 
-SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_fourmoments_semi_{}/{}/".format(args.model, args.gene_ind)
+SAVING_PATH="/home/zixshu/DeepGWAS/baseline/plots_baselines_fourmoments_semi_{}_manual_all/{}/".format(args.model, args.gene_ind)
 os.makedirs(SAVING_PATH, exist_ok=True)
 
 PLOT_PATH=SAVING_PATH+'selectedlength{}_i{}.png'.format(args.selected_length,args.interaction)

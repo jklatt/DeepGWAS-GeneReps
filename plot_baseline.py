@@ -4,8 +4,8 @@ import os
 import numpy as np
 
 
-ploting_length=200
-setting='control'
+ploting_length=20
+setting='semi'
 
 
 if setting=='control':
@@ -13,7 +13,7 @@ if setting=='control':
     METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_correctbaseline"
 elif setting=="semi":
     seeds=range(5)
-    METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_logistic"
+    METRIC_PATH="/home/zixshu/DeepGWAS/baseline/metrics_fourmoments_semi_logistic_manual_all"
 
 evaluation_scores_true={}
 evaluation_scores_false={}
@@ -204,7 +204,7 @@ axis[1].set_xlim([0, 1])
 axis[1].set_ylim([0, 1])             
 
 # SAVING_PATH="/home/zixshu/DeepGWAS/baseline_semi_setting_logisticreg_plots/"
-SAVING_PATH="/home/zixshu/DeepGWAS/baseline_{}_setting_plots/".format(setting)
+SAVING_PATH="/home/zixshu/DeepGWAS/baseline_{}_setting_plots_manual_all/".format(setting)
 os.makedirs(SAVING_PATH,exist_ok=True)
 plt.savefig(SAVING_PATH+"plot_snplength{}_iTrue_test.png".format(str(ploting_length)))
 
@@ -239,7 +239,7 @@ axis[1].set_xlim([0, 1])
 axis[1].set_ylim([0, 1])             
 
 # SAVING_PATH="/home/zixshu/DeepGWAS/baseline_semi_setting_logisticreg_plots/"
-SAVING_PATH="/home/zixshu/DeepGWAS/baseline_{}_setting_plots/".format(setting)
+SAVING_PATH="/home/zixshu/DeepGWAS/baseline_{}_setting_plots_manual_all/".format(setting)
 os.makedirs(SAVING_PATH,exist_ok=True)
 plt.savefig(SAVING_PATH+"plot_snplength{}_iFalse_test.png".format(str(ploting_length)))
 

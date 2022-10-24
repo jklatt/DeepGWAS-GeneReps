@@ -20,7 +20,6 @@ elif attention_mec=="gated_attention":
     path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_gated_attention_/"
     saving_path="/home/zixshu/DeepGWAS/plot_instances_level_gated_attention_onlypresentFalse/"
 
-
 elif attention_mec=="attention_onlypresent":
     path="/home/zixshu/DeepGWAS/instance_level_results_lr0.0005_attention_onlypresent_onlypresentTrue/"
     saving_path="/home/zixshu/DeepGWAS/plot_instances_level_attention_onlypresentTrue/"
@@ -35,13 +34,13 @@ seeds=range(1,6)
 selected_seed=range(1,6)
 if ploting_snp==20:
     #snp20
-    criteria1_base="nsnp20"
+    criteria1_base="nsnp20_"
     criteria2_base="csnp3"
     criteria3_base="max1.0"
     criteria4_base="prevalence0.35"
 elif ploting_snp==200:
     #snp200
-    criteria1_base="nsnp200"
+    criteria1_base="nsnp200_"
     criteria2_base="csnp3"
     criteria3_base="max0.8"
     criteria4_base="prevalence0.35"
@@ -99,6 +98,7 @@ def read_result_byseed(seeds, criteria1, criteria2, criteria3, criteria4, get_av
 
                     precision, recall, thresholds_prc = precision_recall_curve(labels, attention_weights)
                     prc_avg = average_precision_score(labels,attention_weights)
+                    print(evaluation_dict)
 
                     if 'iTrue' in file:
                         evaluation_scores_true[train_parameter]['roc_auc'].append(roc_auc)

@@ -26,8 +26,6 @@ if setting=="toy":
         saving_path="/home/zixshu/DeepGWAS/plot_multiprc_vsparameter_attention_onlypresent_weightedfixed_withattetion_forwardfill_allentries/"
 
 
-
-
 def read_result_byseed(seeds, criteria1, criteria2, criteria3, get_avg_dic, variating_parameter, path):
     # extracting max_present dictionary
     evaluation_scores_true={}
